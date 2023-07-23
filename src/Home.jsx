@@ -1,8 +1,6 @@
 import { React, useState } from "react";
-import MDEditor from "@uiw/react-md-editor";
-import tpublish from "../module/tpublish";
-import "./TEHome.scss";
-function TEHome() {
+import "./Home.scss";
+function Home() {
   const [content, setContent] = useState("**IPFS TextEditor**");
   const [platools, setPlatools] = useState(["infura", "fleek", "pinata"]);
   const [curplat, setCurplat] = useState("infura");
@@ -10,89 +8,12 @@ function TEHome() {
   const [secret, setSecret] = useState("");
   const [msg, setMsg] = useState("");
   const [publishing, setPublishing] = useState(false);
-  const onPublish = () => {
-    console.log("publish to ipfs", content);
-    if (key.length === 0 || secret.length === 0) {
-      alert("Please enter PROJECT KEY and PROJECT SECRET");
-      return;
-    }
-    publishToIPFS();
-  };
-  const publishToIPFS = () => {
-    if (publishing) {
-      return;
-    }
-    setPublishing(true);
-    setMsg("publishing...");
-    if (curplat === "infura") {
-      infuraPublish();
-    } else if (curplat === "fleek") {
-      fleekPublish();
-    } else if (curplat === "pinata") {
-      pinataPublish();
-    }
-  };
+  
 
-  const infuraPublish = () => {
-    tpublish.infuraPublish(
-      key,
-      secret,
-      content,
-      (response) => {
-        const cid = response.cid.toString();
-        setMsg("Success! CID: " + cid);
-        setPublishing(false);
-      },
-      (err) => {
-        setMsg(String(err));
-        setPublishing(false);
-      }
-    );
-  };
+  
 
-  const fleekPublish = () => {
-    tpublish.fleekPublish(
-      key,
-      secret,
-      content,
-      (response) => {
-        const cid = response.hashV0;
-        setMsg("Success! CID: " + cid);
-        setPublishing(false);
-      },
-      (err) => {
-        setMsg(String(err));
-        setPublishing(false);
-      }
-    );
-  };
+  
 
-  const pinataPublish = () => {
-    tpublish.pinataPublish(
-      key,
-      secret,
-      content,
-      (response) => {
-        const cid = response.IpfsHash;
-        setMsg("Success! CID: " + cid);
-        setPublishing(false);
-      },
-      (err) => {
-        setMsg(String(err));
-        setPublishing(false);
-      }
-    );
-  };
-
-  const platHref = () => {
-    if (curplat === "infura") {
-      return "https://app.infura.io/dashboard";
-    } else if (curplat === "fleek") {
-      return "https://app.fleek.co/";
-    } else if (curplat === "pinata") {
-      return "https://app.pinata.cloud/developers/api-keys";
-    }
-  };
 
   return (
     <div className="bg">
@@ -122,10 +43,6 @@ function TEHome() {
         </div>
         <div className="keyblock">
           <div className="project">
-            <p className="name">{"[" + curplat.toUpperCase() + "]"}</p>
-            <a rel="noreferrer" href={platHref()} target="_blank">
-              {"No project key, go " + curplat + " get it"}
-            </a>
           </div>
 
           <div className="keybox">
@@ -157,21 +74,9 @@ function TEHome() {
             </div>
           </div>
         </div>
-        <div className="buttonbox">
-          {msg.length !== 0 ? <p className="textcid">{msg}</p> : undefined}
-          <button
-            className="buttonpublish"
-            disabled={publishing}
-            onClick={onPublish}
-          >
-            {publishing === true ? "PUBLISHING..." : "PUBLISH TO IPFS"}
-          </button>
-        </div>
-        <MDEditor value={content} height={400} onChange={setContent} />
-        {/* <MDEditor.Markdown source={value} style={{ whiteSpace: "pre-wrap" }} /> */}
       </div>
     </div>
   );
 }
 
-export default TEHome;
+export default Home;

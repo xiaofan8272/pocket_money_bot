@@ -43,16 +43,15 @@ function _apiAxios(
   headers = {},
   addheaders = {}
 ) {
-  let defaultHeaders = {
-    "Content-Type": "application/json",
-    Accept: "application/json",
+  let tHeaders = {
+    'Content-Type': 'application/x-www-form-urlencoded; charset=UTF-8', 
   };
   if (JSON.stringify(headers) !== JSON.stringify({})){
-    defaultHeaders = headers;
+    tHeaders = headers;
   }
   if (JSON.stringify(addheaders) !== JSON.stringify({})){
     for (var key in addheaders){
-        defaultHeaders[key] = addheaders[key];
+      tHeaders[key] = addheaders[key];
     }
   }
 
@@ -61,7 +60,7 @@ function _apiAxios(
     url: url,
     params: params,
     data: data,
-    headers: headers,
+    headers: tHeaders,
     withCredentials: false,
   })
     .then(

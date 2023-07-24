@@ -1,81 +1,103 @@
 import { React, useState } from "react";
+import Box from "@mui/material/Box";
+import Container from "@mui/material/Container";
+import Button from "@mui/material/Button";
+import FormGroup from "@mui/material/FormGroup";
+import FormControlLabel from "@mui/material/FormControlLabel";
+import Checkbox from "@mui/material/Checkbox";
+import Typography from "@mui/material/Typography";
 import "./Home.scss";
+import { testPing } from "./api/requestData";
+import xglobal, { defBaseUrl } from "./xglobal";
+const baseUrls = [
+  "https://api.binance.com",
+  "https://api-gcp.binance.com",
+  "https://api1.binance.com",
+  "https://api2.binance.com",
+  "https://api3.binance.com",
+  "https://api4.binance.com",
+];
 function Home() {
-  const [content, setContent] = useState("**IPFS TextEditor**");
-  const [platools, setPlatools] = useState(["infura", "fleek", "pinata"]);
-  const [curplat, setCurplat] = useState("infura");
-  const [key, setKey] = useState("");
-  const [secret, setSecret] = useState("");
-  const [msg, setMsg] = useState("");
-  const [publishing, setPublishing] = useState(false);
   
-
-  
-
-  
-
+  const [curBaseUrl, setCurBaseUrl] = useState(defBaseUrl);
+  const [pingInfo, setPingInfo] = useState({ isPing: false, info: "" });
 
   return (
-    <div className="bg">
-      <div className="warpper">
-        <header className="header">IPFS TextEditor</header>
-        <p className="notice">
-          ⚠️ Notice ⚠️ - &nbsp;Please rest assured that we do not save or upload
-          your project key or project secret, we only use them to obtain
-          platform upload permissions.
-        </p>
-        <div className="checkboxs">
-          {platools.map((platool) => (
-            <label className="label" key={platool}>
-              <input
-                className="checkbox"
-                checked={curplat === platool}
-                onChange={() => {
-                  setCurplat(platool);
-                  setKey("");
-                  setSecret("");
-                }}
-                type="checkbox"
+    <Container className="bg" maxWidth="false">
+      <Box sx={{ bgcolor: "#cfe8fc", width: "100vw", height: "100vh" }}>
+        <Button
+          variant="contained"
+          onClick={() => {
+            testPing()
+              .then((response) => {
+                console.log(response);
+              })
+              .catch((err) => {
+                console.log(String(err));
+              });
+          }}
+        >
+          Contained
+        </Button>
+      </Box>
+      <Box className="rightBox">
+        <FormGroup>
+          {baseUrls.map((item) => {
+            return (
+              <FormControlLabel
+                control={
+                  <Checkbox
+                    checked={curBaseUrl === item}
+                    onChange={() => {
+                      setCurBaseUrl(item);
+                      xglobal.inst().baseUrl = item;
+                    }}
+                  />
+                }
+                label={item}
               />
-              {platool}
-            </label>
-          ))}
-        </div>
-        <div className="keyblock">
-          <div className="project">
-          </div>
-
-          <div className="keybox">
-            <div className="pid">
-              <p className="name">PROJECT KEY</p>
-              <input
-                type="text"
-                className="name"
-                value={key}
-                onChange={(e) => {
-                  console.log(e);
-                  setKey(e.target.value);
-                }}
-                size="30"
-              ></input>
-            </div>
-            <div className="pid">
-              <p className="name">PROJECT SECRET</p>
-              <input
-                type="password"
-                className="name"
-                value={secret}
-                onChange={(e) => {
-                  console.log(e);
-                  setSecret(e.target.value);
-                }}
-                size="30"
-              ></input>
-            </div>
-          </div>
-        </div>
-      </div>
-    </div>
+            );
+          })}
+        </FormGroup>
+        <Box
+          sx={{
+            display: "flex",
+            flexDirection: "row",
+            alignItems: "center",
+            marginTop: "20px",
+          }}
+        >
+          <Button
+            variant="contained"
+            onClick={() => {
+              if (pingInfo.isPing) {
+                return;
+              }
+              pingInfo.isPing = true;
+              setPingInfo({ ...pingInfo });
+              testPing()
+                .then((response) => {
+                  pingInfo.isPing = false;
+                  pingInfo.info = "server connection";
+                  setPingInfo({ ...pingInfo });
+                  console.log(response);
+                })
+                .catch((err) => {
+                  pingInfo.isPing = false;
+                  pingInfo.info = "server not connected";
+                  setPingInfo({ ...pingInfo });
+                  console.log(String(err));
+                });
+            }}
+          >
+            Ping
+          </Button>
+          <Typography sx={{ marginLeft: "20px" }}>
+            {pingInfo.isPing === true ? "ping..." : pingInfo.info}
+          </Typography>
+        </Box>
+      </Box>
+    </Container>
   );
 }
 

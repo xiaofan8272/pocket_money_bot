@@ -1,8 +1,43 @@
-.bg{
+.bg {
     width: 100%;
-    .rightBox{
-        position: absolute;
-        top: 40px;
-        right: 0;
+    padding: 10px;
+    display: flex;
+    flex-direction: row;
+    justify-content: space-between;
+    align-items: flex-start;
+    background-color: rgb(248, 248, 248);
+
+    .leftBox {
+        width: 100vw;
+        height: 100vh;
+        border-left-width: thin;
+        border-left-color: rgba(128, 128, 128, 0.47);
+        border-left-style: solid;
+
+        .headerBox {
+            padding: 5px;
+            height: 60px;
+            border-bottom-width: thin;
+            border-bottom-color: rgba(128, 128, 128, 0.47);
+            border-bottom-style: solid;
+            display: flex;
+            flex-direction: column;
+            justify-content: space-between;
+            align-items: flex-start;
+        }
+        .mainBox{
+            width: 100px;
+            height: 100vh;
+            background-color: red;
+        }
+    }
+
+    .rightBox {
+        padding: 10px;
+        height: 100vh;
+        border-left-width: thin;
+        border-left-color: rgba(128, 128, 128, 0.47);
+        border-left-style: solid;
+
     }
 }

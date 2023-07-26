@@ -1,48 +1,50 @@
 import { React, useState } from "react";
 import Box from "@mui/material/Box";
-import Container from "@mui/material/Container";
 import Button from "@mui/material/Button";
 import FormGroup from "@mui/material/FormGroup";
 import FormControlLabel from "@mui/material/FormControlLabel";
 import Checkbox from "@mui/material/Checkbox";
 import Typography from "@mui/material/Typography";
 import "./Home.scss";
-import { testPing } from "./api/requestData";
-import xglobal, { defBaseUrl } from "./xglobal";
-const baseUrls = [
-  "https://api.binance.com",
-  "https://api-gcp.binance.com",
-  "https://api1.binance.com",
-  "https://api2.binance.com",
-  "https://api3.binance.com",
-  "https://api4.binance.com",
-];
+import { testPing, depthInfo } from "./api/requestData";
+import xglobal from "./util/xglobal";
+import { defBaseUrl, baseUrlList } from "./util/xdef";
 function Home() {
-  
   const [curBaseUrl, setCurBaseUrl] = useState(defBaseUrl);
   const [pingInfo, setPingInfo] = useState({ isPing: false, info: "" });
 
   return (
-    <Container className="bg" maxWidth="false">
-      <Box sx={{ bgcolor: "#cfe8fc", width: "100vw", height: "100vh" }}>
-        <Button
-          variant="contained"
-          onClick={() => {
-            testPing()
-              .then((response) => {
-                console.log(response);
-              })
-              .catch((err) => {
-                console.log(String(err));
-              });
-          }}
-        >
-          Contained
-        </Button>
+    <Box className="bg" maxWidth="false">
+      <Box className="leftBox">
+        <Box className="headerBox">
+          <Typography
+            sx={{
+              marginLeft:"10px",
+              fontSize: "20px",
+              fontFamily: "Saira",
+              fontWeight: "600",
+              color: "rgb(0,0,4)",
+            }}
+          >
+            {"USDC/USDT"}
+          </Typography>
+          <Typography
+            sx={{
+              marginLeft:"10px",
+              fontSize: "15px",
+              fontFamily: "Saira",
+              fontWeight: "400",
+              color: "rgb(0,0,4)",
+            }}
+          >
+            {"0费率"}
+          </Typography>
+        </Box>
+        <Box className="mainBox"></Box>
       </Box>
       <Box className="rightBox">
         <FormGroup>
-          {baseUrls.map((item) => {
+          {baseUrlList.map((item) => {
             return (
               <FormControlLabel
                 control={
@@ -97,7 +99,7 @@ function Home() {
           </Typography>
         </Box>
       </Box>
-    </Container>
+    </Box>
   );
 }
 

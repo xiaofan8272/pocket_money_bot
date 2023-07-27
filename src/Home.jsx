@@ -7,12 +7,20 @@ import Checkbox from "@mui/material/Checkbox";
 import Typography from "@mui/material/Typography";
 import PDepthCard from "./components/PDepthCard";
 import "./Home.scss";
-import { testPing, depthInfo } from "./api/requestData";
+import { testPing } from "./api/requestData";
 import xglobal from "./util/xglobal";
 import { defBaseUrl, baseUrlList } from "./util/xdef";
+import { signature } from "./util/xhelp";
 function Home() {
   const [curBaseUrl, setCurBaseUrl] = useState(defBaseUrl);
   const [pingInfo, setPingInfo] = useState({ isPing: false, info: "" });
+
+  const testHMAC = () => {
+    let message = "apiKey=vmPUZE6mv9SD5VNHk4HlWFsOr6aKE2zvsw0MuIgwCIPy6utIco14y7Ju91duEh8A&newOrderRespType=ACK&price=52000.00&quantity=0.01000000&recvWindow=100&side=SELL&symbol=BTCUSDT&timeInForce=GTC&timestamp=1645423376532&type=LIMIT"
+    let secret = "NhqPtmdSJYdKjVHjA7PZj4Mge3R5YNiP1e3UZjInClVN65XAbvqqM6A7H5fATj0j";
+    let sig =  signature(message, secret);
+    console.log(sig);
+  }
 
   return (
     <Box className="home_bg" maxWidth="false">
@@ -78,6 +86,8 @@ function Home() {
           <Button
             variant="contained"
             onClick={() => {
+              testHMAC();
+              return;
               if (pingInfo.isPing) {
                 return;
               }

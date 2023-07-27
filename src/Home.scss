@@ -1,5 +1,6 @@
-.bg {
+.home_bg {
     width: 100%;
+    height: 100%;
     padding: 10px;
     display: flex;
     flex-direction: row;
@@ -7,36 +8,38 @@
     align-items: flex-start;
     background-color: rgb(248, 248, 248);
 
-    .leftBox {
+    .home_left_box {
         width: 100vw;
         height: 100vh;
         border-left-width: thin;
-        border-left-color: rgba(128, 128, 128, 0.47);
+        border-left-color: rgba(128, 128, 128, 0.1);
         border-left-style: solid;
 
-        .headerBox {
+        .home_header_box {
             padding: 5px;
-            height: 60px;
+            padding-bottom: 10px;
+            height: 80px;
             border-bottom-width: thin;
-            border-bottom-color: rgba(128, 128, 128, 0.47);
+            border-bottom-color: rgba(128, 128, 128, 0.1);
             border-bottom-style: solid;
             display: flex;
             flex-direction: column;
-            justify-content: space-between;
+            justify-content: space-evenly;
             align-items: flex-start;
         }
-        .mainBox{
-            width: 100px;
-            height: 100vh;
-            background-color: red;
+        .home_main_box{
+            // width: 500px;
+            // height: 1000px;
+            // background-color: red;
+            display:flex;
         }
     }
 
-    .rightBox {
+    .home_right_box {
         padding: 10px;
         height: 100vh;
         border-left-width: thin;
-        border-left-color: rgba(128, 128, 128, 0.47);
+        border-left-color: rgba(128, 128, 128, 0.1);
         border-left-style: solid;
 
     }

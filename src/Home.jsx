@@ -5,6 +5,7 @@ import FormGroup from "@mui/material/FormGroup";
 import FormControlLabel from "@mui/material/FormControlLabel";
 import Checkbox from "@mui/material/Checkbox";
 import Typography from "@mui/material/Typography";
+import PDepthCard from "./components/PDepthCard";
 import "./Home.scss";
 import { testPing, depthInfo } from "./api/requestData";
 import xglobal from "./util/xglobal";
@@ -14,12 +15,13 @@ function Home() {
   const [pingInfo, setPingInfo] = useState({ isPing: false, info: "" });
 
   return (
-    <Box className="bg" maxWidth="false">
-      <Box className="leftBox">
-        <Box className="headerBox">
+    <Box className="home_bg" maxWidth="false">
+      <Box className="home_left_box">
+        <Box className="home_header_box">
           <Typography
             sx={{
               marginLeft:"10px",
+              // marginBottom:"10px",
               fontSize: "20px",
               fontFamily: "Saira",
               fontWeight: "600",
@@ -40,13 +42,17 @@ function Home() {
             {"0费率"}
           </Typography>
         </Box>
-        <Box className="mainBox"></Box>
+        <Box className="home_main_box">
+          <PDepthCard/>
+          {/* <Box sx={{width:"100px", height:"100px", backgroundColor:"green"}}></Box> */}
+        </Box>
       </Box>
-      <Box className="rightBox">
+      <Box className="home_right_box">
         <FormGroup>
           {baseUrlList.map((item) => {
             return (
               <FormControlLabel
+              key={item}
                 control={
                   <Checkbox
                     checked={curBaseUrl === item}

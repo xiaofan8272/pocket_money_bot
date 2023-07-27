@@ -1,7 +1,25 @@
-.card_game_bg {
-    width: 100%;
-    height: 100%;
-    background-color: transparent;
+.depth_bg {
+    display: flex;
+    flex-direction: column;
+    justify-content: flex-start;
+    align-items: center;
 
+    .depth_header_box {
+        width: 260px;
+        height: 40px;
+        padding-left: 15px;
+        padding-right: 15px;
+        display: flex;
+        flex-direction: row;
+        justify-content: space-between;
+        align-items: center;
+    }
 
+    .depth_list{
+        width: 260px;
+        padding: 0;
+        &ul{
+            padding: 0;
+        }
+    }
 }

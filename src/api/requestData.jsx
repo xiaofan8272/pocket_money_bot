@@ -12,7 +12,18 @@ export function depthInfo() {
     method: "get",
     url: xglobal.inst().baseUrl+"/api/v3/depth",
     params:{
-      "symbol":"USDCUSDT"
+      "symbol":"USDCUSDT",
+      "limit":5
+    }
+  });
+}
+
+export function tickerPrice() {
+  return Requset({
+    method: "get",
+    url: xglobal.inst().baseUrl+"/api/v3/ticker/price",
+    params:{
+      "symbol":"USDCUSDT",
     }
   });
 }

@@ -28,7 +28,7 @@ function requset(config) {
       config.params,
       config.data,
       config.headers,
-      config.addheaders
+      config.extHeaders
     );
   });
 }
@@ -41,7 +41,7 @@ function _apiAxios(
   params = {},
   data = {},
   headers = {},
-  addheaders = {}
+  extHeaders = {}
 ) {
   let tHeaders = {
     'Content-Type': 'application/x-www-form-urlencoded; charset=UTF-8', 
@@ -49,9 +49,9 @@ function _apiAxios(
   if (JSON.stringify(headers) !== JSON.stringify({})){
     tHeaders = headers;
   }
-  if (JSON.stringify(addheaders) !== JSON.stringify({})){
-    for (var key in addheaders){
-      tHeaders[key] = addheaders[key];
+  if (JSON.stringify(extHeaders) !== JSON.stringify({})){
+    for (var key in extHeaders){
+      tHeaders[key] = extHeaders[key];
     }
   }
 

@@ -5,22 +5,36 @@ import FormGroup from "@mui/material/FormGroup";
 import FormControlLabel from "@mui/material/FormControlLabel";
 import Checkbox from "@mui/material/Checkbox";
 import Typography from "@mui/material/Typography";
+import TextField from "@mui/material/TextField";
 import PDepthCard from "./components/PDepthCard";
 import "./Home.scss";
-import { testPing } from "./api/requestData";
+import { testPing, openOrders } from "./api/requestData";
 import xglobal from "./util/xglobal";
 import { defBaseUrl, baseUrlList } from "./util/xdef";
 import { signature } from "./util/xhelp";
 function Home() {
   const [curBaseUrl, setCurBaseUrl] = useState(defBaseUrl);
   const [pingInfo, setPingInfo] = useState({ isPing: false, info: "" });
-
+  const [apiKey, setApiKey] = useState("");
+  const [apiSecret, setApiSecret] = useState("");
   const testHMAC = () => {
-    let message = "apiKey=vmPUZE6mv9SD5VNHk4HlWFsOr6aKE2zvsw0MuIgwCIPy6utIco14y7Ju91duEh8A&newOrderRespType=ACK&price=52000.00&quantity=0.01000000&recvWindow=100&side=SELL&symbol=BTCUSDT&timeInForce=GTC&timestamp=1645423376532&type=LIMIT"
-    let secret = "NhqPtmdSJYdKjVHjA7PZj4Mge3R5YNiP1e3UZjInClVN65XAbvqqM6A7H5fATj0j";
-    let sig =  signature(message, secret);
-    console.log(sig);
-  }
+    const apikey = xglobal.inst().apiKey;
+    const apiSecret = xglobal.inst().apiSecret;
+    if (apikey.length === 0 || apiSecret.length === 0) {
+      return;
+    }
+    const timestamp = new Date().getTime();
+    let message = "symbol=USDCUSDT&recvWindow=5000&timestamp=" + timestamp;
+    let sig = signature(message, apiSecret);
+
+    openOrders(timestamp, apikey, sig)
+      .then((response) => {
+        console.log(response);
+      })
+      .catch((err) => {
+        console.log(String(err));
+      });
+  };
 
   return (
     <Box className="home_bg" maxWidth="false">
@@ -28,7 +42,7 @@ function Home() {
         <Box className="home_header_box">
           <Typography
             sx={{
-              marginLeft:"10px",
+              marginLeft: "10px",
               // marginBottom:"10px",
               fontSize: "20px",
               fontFamily: "Saira",
@@ -40,7 +54,7 @@ function Home() {
           </Typography>
           <Typography
             sx={{
-              marginLeft:"10px",
+              marginLeft: "10px",
               fontSize: "15px",
               fontFamily: "Saira",
               fontWeight: "400",
@@ -50,9 +64,9 @@ function Home() {
             {"0费率"}
           </Typography>
         </Box>
+
         <Box className="home_main_box">
-          <PDepthCard/>
-          {/* <Box sx={{width:"100px", height:"100px", backgroundColor:"green"}}></Box> */}
+          <PDepthCard />
         </Box>
       </Box>
       <Box className="home_right_box">
@@ -60,7 +74,7 @@ function Home() {
           {baseUrlList.map((item) => {
             return (
               <FormControlLabel
-              key={item}
+                key={item}
                 control={
                   <Checkbox
                     checked={curBaseUrl === item}
@@ -114,6 +128,44 @@ function Home() {
             {pingInfo.isPing === true ? "ping..." : pingInfo.info}
           </Typography>
         </Box>
+        <TextField
+          sx={{
+            marginTop: "12px",
+            width: "80%",
+            borderRadius: "5px",
+            borderColor: "#323232",
+            // backgroundColor: "#202122",
+            fontSize: "14px",
+            fontFamily: "Saira",
+            fontWeight: "500",
+            // color: "#FFFFFF",
+          }}
+          value={apiKey}
+          variant="outlined"
+          onChange={(event) => {
+            setApiKey(event.target.value);
+            xglobal.inst().apiKey = event.target.value;
+          }}
+        />
+        <TextField
+          sx={{
+            marginTop: "12px",
+            width: "80%",
+            borderRadius: "5px",
+            borderColor: "#323232",
+            // backgroundColor: "#202122",
+            fontSize: "14px",
+            fontFamily: "Saira",
+            fontWeight: "500",
+            // color: "#FFFFFF",
+          }}
+          value={apiSecret}
+          variant="outlined"
+          onChange={(event) => {
+            setApiSecret(event.target.value);
+            xglobal.inst().apiSecret = event.target.value;
+          }}
+        />
       </Box>
     </Box>
   );

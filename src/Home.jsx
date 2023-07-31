@@ -8,28 +8,64 @@ import Typography from "@mui/material/Typography";
 import TextField from "@mui/material/TextField";
 import PDepthCard from "./components/PDepthCard";
 import "./Home.scss";
-import { testPing, openOrders } from "./api/requestData";
+import { testPing, openOrders, depthInfo, tickerPrice } from "./api/requestData";
 import xglobal from "./util/xglobal";
 import { defBaseUrl, baseUrlList } from "./util/xdef";
 import { signature } from "./util/xhelp";
+import useInterval from "./util/xinterval";
 function Home() {
   const [curBaseUrl, setCurBaseUrl] = useState(defBaseUrl);
   const [pingInfo, setPingInfo] = useState({ isPing: false, info: "" });
   const [apiKey, setApiKey] = useState("");
   const [apiSecret, setApiSecret] = useState("");
-  const testHMAC = () => {
+  const [orders, setOrders] = useState([]);
+  const [sellList, setSellList] = useState([]);
+  const [buyList, setBuyList] = useState([]);
+  const [curPrice, setCurPrice] = useState("");
+  useInterval(() => {
+    fetchOpenOrders();
+    fetchDepthInfo();
+    fetchTickerPrice();
+  }, 1000);
+
+  const fetchOpenOrders = () => {
     const apikey = xglobal.inst().apiKey;
     const apiSecret = xglobal.inst().apiSecret;
     if (apikey.length === 0 || apiSecret.length === 0) {
       return;
     }
     const timestamp = new Date().getTime();
-    let message = "symbol=USDCUSDT&recvWindow=5000&timestamp=" + timestamp;
+    let message = "symbol="+xglobal.inst().symbol+"&recvWindow=5000&timestamp=" + timestamp;
     let sig = signature(message, apiSecret);
-
     openOrders(timestamp, apikey, sig)
       .then((response) => {
         console.log(response);
+        setOrders(response);
+      })
+      .catch((err) => {
+        console.log(String(err));
+      });
+  };
+
+  const fetchDepthInfo = () => {
+    depthInfo()
+      .then((response) => {
+        console.log(response);
+        let asks = response["asks"];
+        setSellList(asks.reverse());
+        let bids = response["bids"];
+        setBuyList(bids);
+      })
+      .catch((err) => {
+        console.log(String(err));
+      });
+  };
+
+  const fetchTickerPrice = () => {
+    tickerPrice()
+      .then((response) => {
+        console.log(response);
+        setCurPrice(response["price"]);
       })
       .catch((err) => {
         console.log(String(err));
@@ -66,7 +102,7 @@ function Home() {
         </Box>
 
         <Box className="home_main_box">
-          <PDepthCard />
+          <PDepthCard buyList={buyList} sellList={sellList} price={curPrice} orders={orders}/>
         </Box>
       </Box>
       <Box className="home_right_box">
@@ -100,8 +136,6 @@ function Home() {
           <Button
             variant="contained"
             onClick={() => {
-              testHMAC();
-              return;
               if (pingInfo.isPing) {
                 return;
               }

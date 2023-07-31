@@ -2,13 +2,12 @@
     display: flex;
     flex-direction: column;
     justify-content: flex-start;
-    align-items: center;
+    align-items: flex-start;
 
     .depth_header_box {
-        width: 260px;
+        width: 240px;
         height: 40px;
         padding-left: 15px;
-        padding-right: 15px;
         display: flex;
         flex-direction: row;
         justify-content: space-between;
@@ -16,10 +15,7 @@
     }
 
     .depth_list{
-        width: 260px;
+        width: 255px;
         padding: 0;
-        &ul{
-            padding: 0;
-        }
     }
 }

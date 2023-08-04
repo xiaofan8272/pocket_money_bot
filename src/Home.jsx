@@ -1,4 +1,4 @@
-import { React, useState } from "react";
+import { React, useEffect, useState } from "react";
 import Box from "@mui/material/Box";
 import Button from "@mui/material/Button";
 import FormGroup from "@mui/material/FormGroup";
@@ -7,8 +7,16 @@ import Checkbox from "@mui/material/Checkbox";
 import Typography from "@mui/material/Typography";
 import TextField from "@mui/material/TextField";
 import PDepthCard from "./components/PDepthCard";
+import PlaceOrderCard from "./components/PlaceOrderCard";
 import "./Home.scss";
-import { testPing, openOrders, depthInfo, tickerPrice } from "./api/requestData";
+import {
+  testPing,
+  account,
+  exchangeInfo,
+  openOrders,
+  depthInfo,
+  tickerPrice,
+} from "./api/requestData";
 import xglobal from "./util/xglobal";
 import { defBaseUrl, baseUrlList } from "./util/xdef";
 import { signature } from "./util/xhelp";
@@ -18,15 +26,50 @@ function Home() {
   const [pingInfo, setPingInfo] = useState({ isPing: false, info: "" });
   const [apiKey, setApiKey] = useState("");
   const [apiSecret, setApiSecret] = useState("");
+  const [exchange, setExchange] = useState([]);
   const [orders, setOrders] = useState([]);
   const [sellList, setSellList] = useState([]);
   const [buyList, setBuyList] = useState([]);
+  const [balances, setBalances] = useState([]);
   const [curPrice, setCurPrice] = useState("");
+
   useInterval(() => {
-    fetchOpenOrders();
-    fetchDepthInfo();
+    // fetchExchangeInfo();
+    // fetchOpenOrders();
+    // fetchDepthInfo();
     fetchTickerPrice();
-  }, 1000);
+    // fetchAccount();
+  }, 2000);
+
+  useEffect(() => {
+    fetchExchangeInfo();
+    return () => {};
+  }, []);
+
+  const fetchAccount = () => {
+    const apikey = xglobal.inst().apiKey;
+    const apiSecret = xglobal.inst().apiSecret;
+    if (apikey.length === 0 || apiSecret.length === 0) {
+      return;
+    }
+    const timestamp = new Date().getTime();
+    let message = "recvWindow=5000&timestamp=" + timestamp;
+    let sig = signature(message, apiSecret);
+    account(timestamp, apikey, sig)
+      .then((response) => {
+        const tBalances = response["balances"];
+        let tFreeBalances = tBalances.filter((coinInfo) => {
+          return (
+            parseFloat(coinInfo.free) > 0 || parseFloat(coinInfo.locked) > 0
+          );
+        });
+        setBalances(tFreeBalances);
+        console.log(tFreeBalances);
+      })
+      .catch((err) => {
+        console.log(String(err));
+      });
+  };
 
   const fetchOpenOrders = () => {
     const apikey = xglobal.inst().apiKey;
@@ -35,12 +78,27 @@ function Home() {
       return;
     }
     const timestamp = new Date().getTime();
-    let message = "symbol="+xglobal.inst().symbol+"&recvWindow=5000&timestamp=" + timestamp;
+    let message =
+      "symbol=" +
+      xglobal.inst().symbol +
+      "&recvWindow=5000&timestamp=" +
+      timestamp;
     let sig = signature(message, apiSecret);
     openOrders(timestamp, apikey, sig)
       .then((response) => {
         console.log(response);
         setOrders(response);
+      })
+      .catch((err) => {
+        console.log(String(err));
+      });
+  };
+
+  const fetchExchangeInfo = () => {
+    exchangeInfo()
+      .then((response) => {
+        console.log(response);
+        setExchange(response);
       })
       .catch((err) => {
         console.log(String(err));
@@ -86,7 +144,7 @@ function Home() {
               color: "rgb(0,0,4)",
             }}
           >
-            {"USDC/USDT"}
+            {xglobal.inst().baseAsset + "/" + xglobal.inst().quoteAsset}
           </Typography>
           <Typography
             sx={{
@@ -102,7 +160,13 @@ function Home() {
         </Box>
 
         <Box className="home_main_box">
-          <PDepthCard buyList={buyList} sellList={sellList} price={curPrice} orders={orders}/>
+          <PDepthCard
+            buyList={buyList}
+            sellList={sellList}
+            price={curPrice}
+            orders={orders}
+          />
+          <PlaceOrderCard exchange={exchange} price={curPrice} />
         </Box>
       </Box>
       <Box className="home_right_box">
@@ -136,6 +200,15 @@ function Home() {
           <Button
             variant="contained"
             onClick={() => {
+              exchangeInfo()
+                .then((response) => {
+                  console.log(response);
+                })
+                .catch((err) => {
+                  console.log(String(err));
+                });
+              // fetchAccount();
+              return;
               if (pingInfo.isPing) {
                 return;
               }
@@ -168,11 +241,9 @@ function Home() {
             width: "80%",
             borderRadius: "5px",
             borderColor: "#323232",
-            // backgroundColor: "#202122",
             fontSize: "14px",
             fontFamily: "Saira",
             fontWeight: "500",
-            // color: "#FFFFFF",
           }}
           value={apiKey}
           variant="outlined"
@@ -187,11 +258,9 @@ function Home() {
             width: "80%",
             borderRadius: "5px",
             borderColor: "#323232",
-            // backgroundColor: "#202122",
             fontSize: "14px",
             fontFamily: "Saira",
             fontWeight: "500",
-            // color: "#FFFFFF",
           }}
           value={apiSecret}
           variant="outlined"

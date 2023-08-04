@@ -12,8 +12,18 @@ export function depthInfo() {
     method: "get",
     url: xglobal.inst().baseUrl + "/api/v3/depth",
     params: {
-      symbol: "USDCUSDT",
-      limit: 5,
+      symbol: xglobal.inst().symbol,
+      limit: 10,
+    },
+  });
+}
+
+export function exchangeInfo() {
+  return Requset({
+    method: "get",
+    url: xglobal.inst().baseUrl + "/api/v3/exchangeInfo",
+    params: {
+      symbol: xglobal.inst().symbol,
     },
   });
 }
@@ -23,7 +33,7 @@ export function tickerPrice() {
     method: "get",
     url: xglobal.inst().baseUrl + "/api/v3/ticker/price",
     params: {
-      symbol: "USDCUSDT",
+      symbol: xglobal.inst().symbol,
     },
   });
 }
@@ -36,7 +46,7 @@ export function openOrders(timestamp, apiKey, sig) {
       "X-MBX-APIKEY": apiKey,
     },
     params: {
-      symbol: "USDCUSDT",
+      symbol: xglobal.inst().symbol,
       recvWindow: 5000,
       timestamp: timestamp,
       signature: sig,
@@ -48,17 +58,12 @@ export function account(timestamp, apiKey, sig) {
   return Requset({
     method: "get",
     url: xglobal.inst().baseUrl + "/api/v3/account",
-    // headers: {
-    //   'content-type': 'application/json',
-    //   "X-MBX-APIKEY":apiKey
-    // },
     extHeaders: {
       "X-MBX-APIKEY": apiKey,
     },
     params: {
       recvWindow: 5000,
       timestamp: timestamp,
-      // apiKey: apiKey,
       signature: sig,
     },
   });

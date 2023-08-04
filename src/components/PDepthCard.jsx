@@ -5,21 +5,21 @@ import Typography from "@mui/material/Typography";
 import Skeleton from "@mui/material/Skeleton";
 import List from "@mui/material/List";
 import ListItem from "@mui/material/ListItem";
-
+import xglobal from "../util/xglobal";
 const PDepthItem = (props) => {
   const { type, item, orders } = props;
   const [hasOrder, setHasOrder] = useState(false);
   useEffect(() => {
     setHasOrder(false);
-    for(let i = 0;i<orders.length;i++){
+    for (let i = 0; i < orders.length; i++) {
       const tOrder = orders[i];
-      if(tOrder["type"] !== "LIMIT"){
+      if (tOrder["type"] !== "LIMIT") {
         continue;
       }
-      if(tOrder["symbol"] !== "USDCUSDT"){
+      if (tOrder["symbol"] !== xglobal.inst().symbol) {
         continue;
       }
-      if(parseFloat(tOrder["price"]) === parseFloat(item[0])){
+      if (parseFloat(tOrder["price"]) === parseFloat(item[0])) {
         setHasOrder(true);
       }
     }
@@ -38,12 +38,11 @@ const PDepthItem = (props) => {
         <Box
           sx={{
             position: "absolute",
-            left: "5px",
-            width: "4px",
-            height: "4px",
+            left: "6px",
+            width: "6px",
+            height: "6px",
             backgroundColor: "rgb(240,184,59)",
-            borderRadius: "2px",
-            marginRight: "5px",
+            borderRadius: "3px",
           }}
         />
       ) : null}
@@ -83,12 +82,6 @@ const PDepthItem = (props) => {
 
 const PDepthCard = (props) => {
   const { buyList, sellList, price, orders } = props;
-
-
-  // useEffect(() => {
-  //   fetchData();
-  //   return () => {};
-  // }, []);
 
   const renderSellList = () => {
     return sellList.length > 0 ? (
@@ -147,7 +140,7 @@ const PDepthCard = (props) => {
               fontSize: "16px",
               fontFamily: "Saira",
               fontWeight: "400",
-              color: "rgb(128,128,128)",
+              color: "rgb(0,0,4)",
             }}
           >
             {parseFloat(price)}

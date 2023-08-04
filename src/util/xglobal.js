@@ -4,7 +4,9 @@ class xglobal {
   //
   baseUrl = "https://api.binance.com";
   //
-  symbol = "USDCUSDT";
+  baseAsset = "USDC";
+  quoteAsset = "USDT";
+  symbol = this.baseAsset+this.quoteAsset;
   apiKey = "";
   apiSecret = "";
   static inst() {

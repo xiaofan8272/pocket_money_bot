@@ -60,7 +60,7 @@ const PDepthItem = (props) => {
             fontSize: "14px",
             fontFamily: "Saira",
             fontWeight: "400",
-            color: type === "SELL" ? "rgb(245,76,98)" : "rgb(59,192,144)",
+            color: type === "ASK" ? "rgb(245,76,98)" : "rgb(59,192,144)",
           }}
         >
           {parseFloat(item[0])}
@@ -81,16 +81,16 @@ const PDepthItem = (props) => {
 };
 
 const PDepthCard = (props) => {
-  const { buyList, sellList, price, orders } = props;
+  const { bidList, askList, price, orders } = props;
 
-  const renderSellList = () => {
-    return sellList.length > 0 ? (
+  const renderAskList = () => {
+    return askList.length > 0 ? (
       <List className="depth_list">
-        {sellList.map((item, index) => {
+        {askList.map((item, index) => {
           return (
             <PDepthItem
-              key={"sell-item-" + index}
-              type="SELL"
+              key={"ask-item-" + index}
+              type="ASK"
               item={item}
               orders={orders}
             />
@@ -98,18 +98,18 @@ const PDepthCard = (props) => {
         })}
       </List>
     ) : (
-      renderWaittingList("sell")
+      renderWaittingList("ask")
     );
   };
 
-  const renderBuyList = () => {
-    return buyList.length > 0 ? (
+  const renderBidList = () => {
+    return bidList.length > 0 ? (
       <List className="depth_list">
-        {buyList.map((item, index) => {
+        {bidList.map((item, index) => {
           return (
             <PDepthItem
-              key={"buy-item-" + index}
-              type="BUY"
+              key={"bid-item-" + index}
+              type="BID"
               item={item}
               orders={orders}
             />
@@ -117,7 +117,7 @@ const PDepthCard = (props) => {
         })}
       </List>
     ) : (
-      renderWaittingList("buy")
+      renderWaittingList("bid")
     );
   };
 
@@ -198,9 +198,9 @@ const PDepthCard = (props) => {
           {"数量(USDC)"}
         </Typography>
       </Box>
-      {renderSellList()}
+      {renderAskList()}
       {renderCurPrice()}
-      {renderBuyList()}
+      {renderBidList()}
     </Box>
   );
 };

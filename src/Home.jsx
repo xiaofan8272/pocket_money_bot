@@ -28,8 +28,8 @@ function Home() {
   const [apiSecret, setApiSecret] = useState("");
   const [exchange, setExchange] = useState([]);
   const [orders, setOrders] = useState([]);
-  const [sellList, setSellList] = useState([]);
-  const [buyList, setBuyList] = useState([]);
+  const [askList, setAskList] = useState([]);
+  const [bidList, setBidList] = useState([]);
   const [balances, setBalances] = useState([]);
   const [curPrice, setCurPrice] = useState("");
 
@@ -110,9 +110,9 @@ function Home() {
       .then((response) => {
         console.log(response);
         let asks = response["asks"];
-        setSellList(asks.reverse());
+        setAskList(asks.reverse());
         let bids = response["bids"];
-        setBuyList(bids);
+        setBidList(bids);
       })
       .catch((err) => {
         console.log(String(err));
@@ -161,8 +161,8 @@ function Home() {
 
         <Box className="home_main_box">
           <PDepthCard
-            buyList={buyList}
-            sellList={sellList}
+            bidList={bidList}
+            askList={askList}
             price={curPrice}
             orders={orders}
           />

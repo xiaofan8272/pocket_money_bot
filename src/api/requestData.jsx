@@ -28,6 +28,21 @@ export function exchangeInfo() {
   });
 }
 
+export function getUserAsset(timestamp, apiKey, sig) {
+  return Requset({
+    method: "post",
+    url: xglobal.inst().baseUrl + "/sapi/v3/asset/getUserAsset",
+    extHeaders: {
+      "X-MBX-APIKEY": apiKey,
+    },
+    params: {
+      recvWindow: 5000,
+      timestamp: timestamp,
+      signature: sig,
+    },
+  });
+}
+
 export function tickerPrice() {
   return Requset({
     method: "get",
@@ -62,6 +77,35 @@ export function account(timestamp, apiKey, sig) {
       "X-MBX-APIKEY": apiKey,
     },
     params: {
+      recvWindow: 5000,
+      timestamp: timestamp,
+      signature: sig,
+    },
+  });
+}
+
+export function requestPlaceOrder(
+  symbol,
+  side,
+  quantity,
+  price,
+  apiKey,
+  timestamp,
+  sig
+) {
+  return Requset({
+    method: "post",
+    url: xglobal.inst().baseUrl + "/api/v3/order",
+    extHeaders: {
+      "X-MBX-APIKEY": apiKey,
+    },
+    params: {
+      symbol: symbol,
+      side: side,
+      type: "LIMIT",
+      timeInForce: "GTC",
+      quantity: quantity,
+      price: price,
       recvWindow: 5000,
       timestamp: timestamp,
       signature: sig,

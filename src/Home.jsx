@@ -16,6 +16,7 @@ import {
   openOrders,
   depthInfo,
   tickerPrice,
+  getUserAsset
 } from "./api/requestData";
 import xglobal from "./util/xglobal";
 import { defBaseUrl, baseUrlList } from "./util/xdef";
@@ -37,8 +38,8 @@ function Home() {
     // fetchExchangeInfo();
     // fetchOpenOrders();
     // fetchDepthInfo();
-    fetchTickerPrice();
-    // fetchAccount();
+    // fetchTickerPrice();
+    // fetchUserAsset();
   }, 2000);
 
   useEffect(() => {
@@ -88,6 +89,24 @@ function Home() {
       .then((response) => {
         console.log(response);
         setOrders(response);
+      })
+      .catch((err) => {
+        console.log(String(err));
+      });
+  };
+
+  const fetchUserAsset = () => {
+    const apikey = xglobal.inst().apiKey;
+    const apiSecret = xglobal.inst().apiSecret;
+    if (apikey.length === 0 || apiSecret.length === 0) {
+      return;
+    }
+    const timestamp = new Date().getTime();
+    let message = "recvWindow=5000&timestamp=" + timestamp;
+    let sig = signature(message, apiSecret);
+    getUserAsset(timestamp,apikey,sig)
+      .then((response) => {
+        console.log(response);
       })
       .catch((err) => {
         console.log(String(err));
@@ -200,14 +219,7 @@ function Home() {
           <Button
             variant="contained"
             onClick={() => {
-              exchangeInfo()
-                .then((response) => {
-                  console.log(response);
-                })
-                .catch((err) => {
-                  console.log(String(err));
-                });
-              // fetchAccount();
+              fetchUserAsset();
               return;
               if (pingInfo.isPing) {
                 return;

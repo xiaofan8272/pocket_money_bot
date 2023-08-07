@@ -26,7 +26,7 @@ function Home() {
   const [pingInfo, setPingInfo] = useState({ isPing: false, info: "" });
   const [apiKey, setApiKey] = useState("");
   const [apiSecret, setApiSecret] = useState("");
-  const [exchange, setExchange] = useState([]);
+  const [exchange, setExchange] = useState({});
   const [orders, setOrders] = useState([]);
   const [askList, setAskList] = useState([]);
   const [bidList, setBidList] = useState([]);
@@ -166,7 +166,7 @@ function Home() {
             price={curPrice}
             orders={orders}
           />
-          <PlaceOrderCard exchange={exchange} price={curPrice} />
+          {exchange["symbols"] !== undefined ? <PlaceOrderCard exchange={exchange} price={curPrice} /> : null} 
         </Box>
       </Box>
       <Box className="home_right_box">

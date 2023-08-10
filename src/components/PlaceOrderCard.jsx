@@ -9,6 +9,8 @@ import { getUserAsset, requestPlaceOrder } from "../api/requestData";
 import xglobal from "../util/xglobal";
 import { computeDecimalCount } from "../util/xhelp";
 import { signature } from "../util/xhelp";
+//
+import PAlertDlg from "./PAlertDlg";
 const PlaceOrderCard = (props) => {
   const { exchange, price } = props;
   const [bidInfo, setBidInfo] = useState({
@@ -39,6 +41,8 @@ const PlaceOrderCard = (props) => {
     maxNotional: "",
     minNotional: "",
   });
+  const [alertVisible, setAlertVisible] = useState(false);
+  //
   useEffect(() => {
     const filters = exchange["symbols"][0]["filters"];
     const priceFilters = filters.filter((item) => {
@@ -145,6 +149,18 @@ const PlaceOrderCard = (props) => {
       return price.length === 0 ? "" : parseFloat(price);
     }
     return parseFloat(askInfo.price);
+  };
+
+  const _renderAlertDlg = () => {
+    return (
+      <PAlertDlg
+        open={alertVisible}
+        // note={openReport.note}
+        close={() => {
+          setAlertVisible(false);
+        }}
+      />
+    );
   };
 
   return (
@@ -446,7 +462,8 @@ const PlaceOrderCard = (props) => {
               },
             }}
             onClick={() => {
-              placeOrder("BUY");
+              // placeOrder("BUY");
+              setAlertVisible(true);
             }}
           >
             {"买入" + xglobal.inst().baseAsset}
@@ -745,6 +762,7 @@ const PlaceOrderCard = (props) => {
           </Button>
         </Box>
       </Box>
+      {_renderAlertDlg()}
     </Box>
   );
 };

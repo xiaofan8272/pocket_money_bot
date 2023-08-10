@@ -34,13 +34,13 @@ function Home() {
   const [balances, setBalances] = useState([]);
   const [curPrice, setCurPrice] = useState("");
 
-  useInterval(() => {
-    // fetchExchangeInfo();
-    // fetchOpenOrders();
-    // fetchDepthInfo();
-    // fetchTickerPrice();
-    // fetchUserAsset();
-  }, 2000);
+  // useInterval(() => {
+  //   // fetchExchangeInfo();
+  //   fetchOpenOrders();
+  //   fetchDepthInfo();
+  //   fetchTickerPrice();
+  //   // fetchUserAsset();
+  // }, 2000);
 
   useEffect(() => {
     fetchExchangeInfo();
@@ -257,6 +257,7 @@ function Home() {
             fontFamily: "Saira",
             fontWeight: "500",
           }}
+          type="password"
           value={apiKey}
           variant="outlined"
           onChange={(event) => {
@@ -274,6 +275,7 @@ function Home() {
             fontFamily: "Saira",
             fontWeight: "500",
           }}
+          type="password"
           value={apiSecret}
           variant="outlined"
           onChange={(event) => {

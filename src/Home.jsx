@@ -8,15 +8,14 @@ import Typography from "@mui/material/Typography";
 import TextField from "@mui/material/TextField";
 import PDepthCard from "./components/PDepthCard";
 import PlaceOrderCard from "./components/PlaceOrderCard";
+import PDelegationCard from "./components/PDelegationCard";
 import "./Home.scss";
 import {
   testPing,
   account,
-  exchangeInfo,
   openOrders,
   depthInfo,
   tickerPrice,
-  getUserAsset
 } from "./api/requestData";
 import xglobal from "./util/xglobal";
 import { defBaseUrl, baseUrlList } from "./util/xdef";
@@ -27,36 +26,25 @@ function Home() {
   const [pingInfo, setPingInfo] = useState({ isPing: false, info: "" });
   const [apiKey, setApiKey] = useState("");
   const [apiSecret, setApiSecret] = useState("");
-  const [exchange, setExchange] = useState({});
   const [orders, setOrders] = useState([]);
   const [askList, setAskList] = useState([]);
   const [bidList, setBidList] = useState([]);
-  const [balances, setBalances] = useState([]);
   const [curPrice, setCurPrice] = useState("");
 
-  // useInterval(() => {
-  //   // fetchExchangeInfo();
-  //   fetchOpenOrders();
-  //   fetchDepthInfo();
-  //   fetchTickerPrice();
-  //   // fetchUserAsset();
-  // }, 2000);
-
-  useEffect(() => {
-    fetchExchangeInfo();
-    return () => {};
-  }, []);
+  useInterval(() => {
+    fetchOpenOrders();
+    fetchDepthInfo();
+    fetchTickerPrice();
+  }, 2000);
 
   const fetchAccount = () => {
-    const apikey = xglobal.inst().apiKey;
-    const apiSecret = xglobal.inst().apiSecret;
-    if (apikey.length === 0 || apiSecret.length === 0) {
+    if (apiKey.length === 0 || apiSecret.length === 0) {
       return;
     }
     const timestamp = new Date().getTime();
     let message = "recvWindow=5000&timestamp=" + timestamp;
     let sig = signature(message, apiSecret);
-    account(timestamp, apikey, sig)
+    account(timestamp, apiKey, sig)
       .then((response) => {
         const tBalances = response["balances"];
         let tFreeBalances = tBalances.filter((coinInfo) => {
@@ -64,7 +52,7 @@ function Home() {
             parseFloat(coinInfo.free) > 0 || parseFloat(coinInfo.locked) > 0
           );
         });
-        setBalances(tFreeBalances);
+        // setBalances(tFreeBalances);
         console.log(tFreeBalances);
       })
       .catch((err) => {
@@ -73,9 +61,7 @@ function Home() {
   };
 
   const fetchOpenOrders = () => {
-    const apikey = xglobal.inst().apiKey;
-    const apiSecret = xglobal.inst().apiSecret;
-    if (apikey.length === 0 || apiSecret.length === 0) {
+    if (apiKey.length === 0 || apiSecret.length === 0) {
       return;
     }
     const timestamp = new Date().getTime();
@@ -85,39 +71,10 @@ function Home() {
       "&recvWindow=5000&timestamp=" +
       timestamp;
     let sig = signature(message, apiSecret);
-    openOrders(timestamp, apikey, sig)
+    openOrders(timestamp, apiKey, sig)
       .then((response) => {
         console.log(response);
         setOrders(response);
-      })
-      .catch((err) => {
-        console.log(String(err));
-      });
-  };
-
-  const fetchUserAsset = () => {
-    const apikey = xglobal.inst().apiKey;
-    const apiSecret = xglobal.inst().apiSecret;
-    if (apikey.length === 0 || apiSecret.length === 0) {
-      return;
-    }
-    const timestamp = new Date().getTime();
-    let message = "recvWindow=5000&timestamp=" + timestamp;
-    let sig = signature(message, apiSecret);
-    getUserAsset(timestamp,apikey,sig)
-      .then((response) => {
-        console.log(response);
-      })
-      .catch((err) => {
-        console.log(String(err));
-      });
-  };
-
-  const fetchExchangeInfo = () => {
-    exchangeInfo()
-      .then((response) => {
-        console.log(response);
-        setExchange(response);
       })
       .catch((err) => {
         console.log(String(err));
@@ -179,13 +136,32 @@ function Home() {
         </Box>
 
         <Box className="home_main_box">
-          <PDepthCard
-            bidList={bidList}
-            askList={askList}
-            price={curPrice}
-            orders={orders}
-          />
-          {exchange["symbols"] !== undefined ? <PlaceOrderCard exchange={exchange} price={curPrice} /> : null} 
+          <Box
+            sx={{
+              display: "flex",
+              flexDirection: "row",
+              justifyContent: "space-between",
+            }}
+          >
+            <PDepthCard
+              bidList={bidList}
+              askList={askList}
+              price={curPrice}
+              orders={orders}
+            />
+            <PlaceOrderCard
+              apiKey={apiKey}
+              apiSecret={apiSecret}
+              orders={orders}
+            />
+          </Box>
+          <Box sx={{ marginTop: "20px" }}>
+            <PDelegationCard
+              apiKey={apiKey}
+              apiSecret={apiSecret}
+              orders={orders}
+            />
+          </Box>
         </Box>
       </Box>
       <Box className="home_right_box">
@@ -219,8 +195,6 @@ function Home() {
           <Button
             variant="contained"
             onClick={() => {
-              fetchUserAsset();
-              return;
               if (pingInfo.isPing) {
                 return;
               }
@@ -262,7 +236,6 @@ function Home() {
           variant="outlined"
           onChange={(event) => {
             setApiKey(event.target.value);
-            xglobal.inst().apiKey = event.target.value;
           }}
         />
         <TextField
@@ -280,7 +253,6 @@ function Home() {
           variant="outlined"
           onChange={(event) => {
             setApiSecret(event.target.value);
-            xglobal.inst().apiSecret = event.target.value;
           }}
         />
       </Box>

@@ -7,8 +7,6 @@ class xglobal {
   baseAsset = "USDC";
   quoteAsset = "USDT";
   symbol = this.baseAsset+this.quoteAsset;
-  apiKey = "";
-  apiSecret = "";
   static inst() {
     if (this._inst === null) {
       this._inst = new xglobal();

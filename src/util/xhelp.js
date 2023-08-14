@@ -10,3 +10,8 @@ export const computeDecimalCount = (num) => {
   if (Math.floor(tNum) === tNum) return 0;
   return tNum.toString().split(".")[1].length || 0;
 };
+
+export const formateTime = (milliseconds) => {
+  let date = new Date(milliseconds);
+  return (date.getMonth()+1) + "-" + date.getDate() + " " + date.getHours() + ":" + date.getMinutes();
+}

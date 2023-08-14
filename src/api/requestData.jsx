@@ -112,3 +112,26 @@ export function requestPlaceOrder(
     },
   });
 }
+
+export function requestDeleteOrder(
+  symbol,
+  orderId,
+  apiKey,
+  timestamp,
+  sig
+) {
+  return Requset({
+    method: "delete",
+    url: xglobal.inst().baseUrl + "/api/v3/order",
+    extHeaders: {
+      "X-MBX-APIKEY": apiKey,
+    },
+    params: {
+      symbol: symbol,
+      orderId: orderId,
+      recvWindow: 5000,
+      timestamp: timestamp,
+      signature: sig,
+    },
+  });
+}

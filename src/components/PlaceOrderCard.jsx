@@ -5,24 +5,28 @@ import Typography from "@mui/material/Typography";
 import TextField from "@mui/material/TextField";
 import InputAdornment from "@mui/material/InputAdornment";
 import Button from "@mui/material/Button";
-import { getUserAsset, requestPlaceOrder } from "../api/requestData";
+import {
+  getUserAsset,
+  requestPlaceOrder,
+  exchangeInfo,
+} from "../api/requestData";
 import xglobal from "../util/xglobal";
 import { computeDecimalCount } from "../util/xhelp";
 import { signature } from "../util/xhelp";
 //
 import PAlertDlg from "./PAlertDlg";
 const PlaceOrderCard = (props) => {
-  const { exchange, price } = props;
+  const { apiKey, apiSecret } = props;
   const [bidInfo, setBidInfo] = useState({
     price: "",
-    offerBalance: "49912.765",
+    offerBalance: "0",
     quantity: "",
     percentage: "",
     turnover: "",
   });
   const [askInfo, setAskInfo] = useState({
     price: "",
-    offerBalance: "",
+    offerBalance: "0",
     quantity: "",
     percentage: "",
     turnover: "",
@@ -44,42 +48,52 @@ const PlaceOrderCard = (props) => {
   const [alertVisible, setAlertVisible] = useState(false);
   //
   useEffect(() => {
-    const filters = exchange["symbols"][0]["filters"];
-    const priceFilters = filters.filter((item) => {
-      return item.filterType === "PRICE_FILTER";
-    });
-    if (priceFilters.length > 0) {
-      setPriceFilter(priceFilters[0]);
-    }
-    const lostSizes = filters.filter((item) => {
-      return item.filterType === "LOT_SIZE";
-    });
-    if (lostSizes.length > 0) {
-      setQuantityFilter(lostSizes[0]);
-    }
-    const notionals = filters.filter((item) => {
-      return item.filterType === "NOTIONAL";
-    });
-    if (notionals.length > 0) {
-      setNotional(notionals[0]);
-    }
+    fetchExchangeInfo();
   }, []);
 
   useEffect(() => {
     ///
     fetchUserAsset();
-  }, []);
+  }, [apiKey, apiSecret]);
+
+  const fetchExchangeInfo = () => {
+    exchangeInfo()
+      .then((response) => {
+        console.log(response);
+        const exchange = response;
+        const filters = exchange["symbols"][0]["filters"];
+        const priceFilters = filters.filter((item) => {
+          return item.filterType === "PRICE_FILTER";
+        });
+        if (priceFilters.length > 0) {
+          setPriceFilter(priceFilters[0]);
+        }
+        const lostSizes = filters.filter((item) => {
+          return item.filterType === "LOT_SIZE";
+        });
+        if (lostSizes.length > 0) {
+          setQuantityFilter(lostSizes[0]);
+        }
+        const notionals = filters.filter((item) => {
+          return item.filterType === "NOTIONAL";
+        });
+        if (notionals.length > 0) {
+          setNotional(notionals[0]);
+        }
+      })
+      .catch((err) => {
+        console.log(String(err));
+      });
+  };
 
   const fetchUserAsset = () => {
-    const apikey = xglobal.inst().apiKey;
-    const apiSecret = xglobal.inst().apiSecret;
-    if (apikey.length === 0 || apiSecret.length === 0) {
+    if (apiKey.length === 0 || apiSecret.length === 0) {
       return;
     }
     const timestamp = new Date().getTime();
     let message = "recvWindow=5000&timestamp=" + timestamp;
     let sig = signature(message, apiSecret);
-    getUserAsset(timestamp, apikey, sig)
+    getUserAsset(timestamp, apiKey, sig)
       .then((response) => {
         console.log(response);
         const assets = response;
@@ -101,9 +115,7 @@ const PlaceOrderCard = (props) => {
   };
 
   const placeOrder = (side) => {
-    const apikey = xglobal.inst().apiKey;
-    const apiSecret = xglobal.inst().apiSecret;
-    if (apikey.length === 0 || apiSecret.length === 0) {
+    if (apiKey.length === 0 || apiSecret.length === 0) {
       return;
     }
     const timestamp = new Date().getTime();
@@ -125,7 +137,7 @@ const PlaceOrderCard = (props) => {
       side,
       bidInfo.quantity,
       bidInfo.price,
-      apikey,
+      apiKey,
       timestamp,
       sig
     )
@@ -139,14 +151,16 @@ const PlaceOrderCard = (props) => {
 
   const _bidPrice = () => {
     if (bidInfo.price.length === 0) {
-      return price.length === 0 ? "" : parseFloat(price);
+      // return price.length === 0 ? "" : parseFloat(price);
+      return 1.0;
     }
     return parseFloat(bidInfo.price);
   };
 
   const _askPrice = () => {
     if (askInfo.price.length === 0) {
-      return price.length === 0 ? "" : parseFloat(price);
+      // return price.length === 0 ? "" : parseFloat(price);
+      return 1.0;
     }
     return parseFloat(askInfo.price);
   };
@@ -462,8 +476,8 @@ const PlaceOrderCard = (props) => {
               },
             }}
             onClick={() => {
-              // placeOrder("BUY");
-              setAlertVisible(true);
+              placeOrder("BUY");
+              // setAlertVisible(true);
             }}
           >
             {"买入" + xglobal.inst().baseAsset}

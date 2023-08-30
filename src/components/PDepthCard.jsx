@@ -73,7 +73,7 @@ const PDepthItem = (props) => {
             color: "rgb(0,0,4)",
           }}
         >
-          {parseFloat(item[1])}
+          {parseFloat(item[1]).toLocaleString()}
         </Typography>
       </Box>
     </ListItem>

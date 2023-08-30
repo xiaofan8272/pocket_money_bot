@@ -5,9 +5,10 @@ import Typography from "@mui/material/Typography";
 import PNorDlg from "./PNorDlg";
 import { signature, formateTime } from "../util/xhelp";
 import { requestDeleteOrder } from "../api/requestData";
+import { computeDecimalCount, customToFixed } from "../util/xhelp";
 import xglobal from "../util/xglobal";
 const PDelegationCard = (props) => {
-  const { orders, apiKey, apiSecret } = props;
+  const { orders, apiKey, apiSecret, priceFilter, quantityFilter } = props;
   const [dlgInfo, setDlgInfo] = useState({ visible: false, orderId: "" });
   let requesting = false;
   const _requestDeleteOrder = () => {
@@ -30,7 +31,13 @@ const PDelegationCard = (props) => {
       "&recvWindow=5000&timestamp=" +
       timestamp;
     let sig = signature(message, apiSecret);
-    requestDeleteOrder(xglobal.inst().symbol, dlgInfo.orderId, apiKey, timestamp, sig)
+    requestDeleteOrder(
+      xglobal.inst().symbol,
+      dlgInfo.orderId,
+      apiKey,
+      timestamp,
+      sig
+    )
       .then((response) => {
         console.log(response);
         requesting = false;
@@ -46,6 +53,17 @@ const PDelegationCard = (props) => {
         setDlgInfo({ ...dlgInfo });
       });
   };
+  const _computeTurnover = (quantity, price) => {
+    const turnoverDeciaml = computeDecimalCount(
+      parseFloat(quantityFilter.stepSize) *
+        parseFloat(priceFilter.tickSize)
+    );
+    return customToFixed(
+      parseFloat(quantity * price),
+      turnoverDeciaml
+    );
+  }
+  
   return (
     <Box className="delegation_bg">
       <Box
@@ -239,7 +257,7 @@ const PDelegationCard = (props) => {
                 color: "rgb(0,0,4)",
               }}
             >
-              {parseFloat(item.origQty * item.price)}
+              {_computeTurnover(parseFloat(item.origQty), parseFloat(item.price))}
             </Typography>
             <Typography
               sx={{

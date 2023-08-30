@@ -12,7 +12,8 @@ import PDelegationCard from "./components/PDelegationCard";
 import "./Home.scss";
 import {
   testPing,
-  account,
+  getUserAsset,
+  exchangeInfo,
   openOrders,
   depthInfo,
   tickerPrice,
@@ -29,31 +30,75 @@ function Home() {
   const [orders, setOrders] = useState([]);
   const [askList, setAskList] = useState([]);
   const [bidList, setBidList] = useState([]);
+  const [userAssets, setUserAssets] = useState([]);
+  const [priceFilter, setPriceFilter] = useState({
+    maxPrice: "0",
+    minPrice: "0",
+    tickSize: "0",
+  });
+  const [quantityFilter, setQuantityFilter] = useState({
+    maxQty: "0",
+    minQty: "0",
+    stepSize: "0",
+  });
+  const [notional, setNotional] = useState({
+    maxNotional: "",
+    minNotional: "",
+  });
   const [curPrice, setCurPrice] = useState("");
 
   useInterval(() => {
+    fetchUserAsset();
     fetchOpenOrders();
     fetchDepthInfo();
     fetchTickerPrice();
-  }, 2000);
+  }, 8000);
 
-  const fetchAccount = () => {
+  useEffect(() => {
+    fetchExchangeInfo();
+  }, []);
+
+  const fetchUserAsset = () => {
     if (apiKey.length === 0 || apiSecret.length === 0) {
       return;
     }
     const timestamp = new Date().getTime();
     let message = "recvWindow=5000&timestamp=" + timestamp;
     let sig = signature(message, apiSecret);
-    account(timestamp, apiKey, sig)
+    getUserAsset(timestamp, apiKey, sig)
       .then((response) => {
-        const tBalances = response["balances"];
-        let tFreeBalances = tBalances.filter((coinInfo) => {
-          return (
-            parseFloat(coinInfo.free) > 0 || parseFloat(coinInfo.locked) > 0
-          );
+        console.log(response);
+        setUserAssets(response);
+      })
+      .catch((err) => {
+        console.log(String(err));
+      });
+  };
+
+  const fetchExchangeInfo = () => {
+    exchangeInfo()
+      .then((response) => {
+        console.log(response);
+        const exchange = response;
+        const filters = exchange["symbols"][0]["filters"];
+        const priceFilters = filters.filter((item) => {
+          return item.filterType === "PRICE_FILTER";
         });
-        // setBalances(tFreeBalances);
-        console.log(tFreeBalances);
+        if (priceFilters.length > 0) {
+          setPriceFilter(priceFilters[0]);
+        }
+        const lotSizes = filters.filter((item) => {
+          return item.filterType === "LOT_SIZE";
+        });
+        if (lotSizes.length > 0) {
+          setQuantityFilter(lotSizes[0]);
+        }
+        const notionals = filters.filter((item) => {
+          return item.filterType === "NOTIONAL";
+        });
+        if (notionals.length > 0) {
+          setNotional(notionals[0]);
+        }
       })
       .catch((err) => {
         console.log(String(err));
@@ -153,6 +198,12 @@ function Home() {
               apiKey={apiKey}
               apiSecret={apiSecret}
               orders={orders}
+              bidList={bidList}
+              askList={askList}
+              userAssets={userAssets}
+              priceFilter={priceFilter}
+              quantityFilter={quantityFilter}
+              notional={notional}
             />
           </Box>
           <Box sx={{ marginTop: "20px" }}>
@@ -160,6 +211,8 @@ function Home() {
               apiKey={apiKey}
               apiSecret={apiSecret}
               orders={orders}
+              priceFilter={priceFilter}
+              quantityFilter={quantityFilter}
             />
           </Box>
         </Box>

@@ -1,22 +1,86 @@
 import React, { useEffect, useState } from "react";
 import "./PlaceOrderCard.scss";
+import PAlertDlg from "./PAlertDlg";
+import { styled } from "@mui/material/styles";
 import Box from "@mui/material/Box";
 import Typography from "@mui/material/Typography";
 import TextField from "@mui/material/TextField";
 import InputAdornment from "@mui/material/InputAdornment";
 import Button from "@mui/material/Button";
-import {
-  getUserAsset,
-  requestPlaceOrder,
-  exchangeInfo,
-} from "../api/requestData";
+import FormControlLabel from "@mui/material/FormControlLabel";
+import Switch from "@mui/material/Switch";
+import { requestPlaceOrder } from "../api/requestData";
+import { signature, computeDecimalCount, customToFixed } from "../util/xhelp";
 import xglobal from "../util/xglobal";
-import { computeDecimalCount } from "../util/xhelp";
-import { signature } from "../util/xhelp";
 //
-import PAlertDlg from "./PAlertDlg";
+
 const PlaceOrderCard = (props) => {
-  const { apiKey, apiSecret } = props;
+  const {
+    apiKey,
+    apiSecret,
+    orders,
+    bidList,
+    askList,
+    userAssets,
+    priceFilter,
+    quantityFilter,
+    notional,
+  } = props;
+  const IOSSwitch = styled((props) => (
+    <Switch
+      focusVisibleClassName=".Mui-focusVisible"
+      disableRipple
+      {...props}
+    />
+  ))(({ theme }) => ({
+    width: 42,
+    height: 22,
+    padding: 0,
+    "& .MuiSwitch-switchBase": {
+      padding: 0,
+      margin: 2,
+      transitionDuration: "300ms",
+      "&.Mui-checked": {
+        transform: "translateX(20px)",
+        color: "#fff",
+        "& + .MuiSwitch-track": {
+          backgroundColor:
+            theme.palette.mode === "dark" ? "#1C6CF9" : "#65C466", //'#2ECA45',#65C466
+          opacity: 1,
+          border: 0,
+        },
+        "&.Mui-disabled + .MuiSwitch-track": {
+          opacity: 0.5,
+        },
+      },
+      "&.Mui-focusVisible .MuiSwitch-thumb": {
+        color: "#33cf4d",
+        border: "6px solid #fff",
+      },
+      "&.Mui-disabled .MuiSwitch-thumb": {
+        color:
+          theme.palette.mode === "light"
+            ? theme.palette.grey[100]
+            : theme.palette.grey[600],
+      },
+      "&.Mui-disabled + .MuiSwitch-track": {
+        opacity: theme.palette.mode === "light" ? 0.7 : 0.3,
+      },
+    },
+    "& .MuiSwitch-thumb": {
+      boxSizing: "border-box",
+      width: 18,
+      height: 18,
+    },
+    "& .MuiSwitch-track": {
+      borderRadius: 22 / 2,
+      backgroundColor: theme.palette.mode === "light" ? "#E9E9EA" : "#39393D",
+      opacity: 1,
+      transition: theme.transitions.create(["background-color"], {
+        duration: 500,
+      }),
+    },
+  }));
   const [bidInfo, setBidInfo] = useState({
     price: "",
     offerBalance: "0",
@@ -31,90 +95,91 @@ const PlaceOrderCard = (props) => {
     percentage: "",
     turnover: "",
   });
-  const [priceFilter, setPriceFilter] = useState({
-    maxPrice: "",
-    minPrice: "",
-    tickSize: "",
-  });
-  const [quantityFilter, setQuantityFilter] = useState({
-    maxQty: "",
-    minQty: "",
-    stepSize: "",
-  });
-  const [notional, setNotional] = useState({
-    maxNotional: "",
-    minNotional: "",
-  });
+
+  const [autoOrder, setAutoOrder] = useState(true);
   const [alertVisible, setAlertVisible] = useState(false);
   //
   useEffect(() => {
-    fetchExchangeInfo();
-  }, []);
+    if (autoOrder && parseFloat(quantityFilter.maxQty) > 0) {
+      const symbolFilters = orders.filter((item) => {
+        return item.symbol === xglobal.inst().symbol;
+      });
+      if (symbolFilters.length === 0) {
+        console.log("autoOrder", quantityFilter);
+        //没有订单，自动下单
+        const decimalCount = computeDecimalCount(quantityFilter.stepSize);
+        const maxQtyNum = parseFloat(quantityFilter.maxQty);
+        const minQtyNum = parseFloat(quantityFilter.minQty);
+
+        if (
+          parseFloat(bidInfo.offerBalance) > minQtyNum &&
+          parseFloat(askInfo.offerBalance) > minQtyNum
+        ) {
+        } else {
+          if (parseFloat(bidInfo.offerBalance) > minQtyNum) {
+            let tBalance = customToFixed(
+              Math.abs(parseFloat(bidInfo.offerBalance)),
+              decimalCount
+            );
+            if (tBalance > maxQtyNum) {
+              tBalance = maxQtyNum;
+            }
+            if (tBalance < minQtyNum) {
+              tBalance = minQtyNum;
+            }
+            if (bidList.length > 0) {
+              const item = bidList[0];
+              const price = parseFloat(item[0]);
+              placeOrder("BUY", tBalance, price);
+            }
+          }
+          if (parseFloat(askInfo.offerBalance) > minQtyNum) {
+            let tBalance = customToFixed(
+              Math.abs(parseFloat(askInfo.offerBalance)),
+              decimalCount
+            );
+            if (tBalance > maxQtyNum) {
+              tBalance = maxQtyNum;
+            }
+            if (tBalance < minQtyNum) {
+              tBalance = minQtyNum;
+            }
+            if (askList.length > 0) {
+              const item = askList[askList.length - 1];
+              const price = parseFloat(item[0]);
+              placeOrder("SELL", tBalance, price);
+            }
+          }
+        }
+      } else {
+        //已有订单，判断下是否需要撤销订单，然后重新下单
+      }
+    }
+  }, [orders, bidList, askList]);
 
   useEffect(() => {
-    ///
-    fetchUserAsset();
-  }, [apiKey, apiSecret]);
-
-  const fetchExchangeInfo = () => {
-    exchangeInfo()
-      .then((response) => {
-        console.log(response);
-        const exchange = response;
-        const filters = exchange["symbols"][0]["filters"];
-        const priceFilters = filters.filter((item) => {
-          return item.filterType === "PRICE_FILTER";
-        });
-        if (priceFilters.length > 0) {
-          setPriceFilter(priceFilters[0]);
+    const assets = userAssets;
+    if (assets.length > 0) {
+      for (let index = 0; index < assets.length; index++) {
+        const asset = assets[index];
+        if (asset["asset"] === xglobal.inst().baseAsset) {
+          askInfo.offerBalance = asset["free"];
+          setAskInfo({ ...askInfo });
         }
-        const lostSizes = filters.filter((item) => {
-          return item.filterType === "LOT_SIZE";
-        });
-        if (lostSizes.length > 0) {
-          setQuantityFilter(lostSizes[0]);
+        if (asset["asset"] === xglobal.inst().quoteAsset) {
+          bidInfo.offerBalance = asset["free"];
+          setBidInfo({ ...bidInfo });
         }
-        const notionals = filters.filter((item) => {
-          return item.filterType === "NOTIONAL";
-        });
-        if (notionals.length > 0) {
-          setNotional(notionals[0]);
-        }
-      })
-      .catch((err) => {
-        console.log(String(err));
-      });
-  };
-
-  const fetchUserAsset = () => {
-    if (apiKey.length === 0 || apiSecret.length === 0) {
-      return;
+      }
+    } else {
+      askInfo.offerBalance = 0;
+      setAskInfo({ ...askInfo });
+      bidInfo.offerBalance = 0;
+      setBidInfo({ ...bidInfo });
     }
-    const timestamp = new Date().getTime();
-    let message = "recvWindow=5000&timestamp=" + timestamp;
-    let sig = signature(message, apiSecret);
-    getUserAsset(timestamp, apiKey, sig)
-      .then((response) => {
-        console.log(response);
-        const assets = response;
-        for (let index = 0; index < assets.length; index++) {
-          const asset = assets[index];
-          if (asset["asset"] === xglobal.inst().baseAsset) {
-            askInfo.offerBalance = asset["free"];
-            setAskInfo({ ...askInfo });
-          }
-          if (asset["asset"] === xglobal.inst().quoteAsset) {
-            bidInfo.offerBalance = asset["free"];
-            setBidInfo({ ...bidInfo });
-          }
-        }
-      })
-      .catch((err) => {
-        console.log(String(err));
-      });
-  };
+  }, [userAssets]);
 
-  const placeOrder = (side) => {
+  const placeOrder = (side, quantity, price) => {
     if (apiKey.length === 0 || apiSecret.length === 0) {
       return;
     }
@@ -126,17 +191,17 @@ const PlaceOrderCard = (props) => {
       side +
       "&type=LIMIT&timeInForce=GTC" +
       "&quantity=" +
-      bidInfo.quantity +
+      quantity +
       "&price=" +
-      bidInfo.price +
+      price +
       "&recvWindow=5000&timestamp=" +
       timestamp;
     let sig = signature(message, apiSecret);
     requestPlaceOrder(
       xglobal.inst().symbol,
       side,
-      bidInfo.quantity,
-      bidInfo.price,
+      quantity,
+      price,
       apiKey,
       timestamp,
       sig
@@ -181,9 +246,11 @@ const PlaceOrderCard = (props) => {
     <Box className="place_orders_bg">
       <Box
         sx={{
+          paddingLeft: "30px",
+          paddingRight: "30px",
           display: "flex",
           flexDirection: "row",
-          justifyContent: "space-evenly",
+          justifyContent: "space-between",
           alignItems: "center",
           width: "100%",
         }}
@@ -221,13 +288,14 @@ const PlaceOrderCard = (props) => {
               const decimalCount = computeDecimalCount(priceFilter.tickSize);
               const maxPriceNum = parseFloat(priceFilter.maxPrice);
               const minPriceNum = parseFloat(priceFilter.minPrice);
-              let tPrice = Math.abs(parseFloat(event.target.value)).toFixed(
+              let tPrice = customToFixed(
+                Math.abs(parseFloat(event.target.value)),
                 decimalCount
               );
-              if (tPrice > maxPriceNum) {
+              if (maxPriceNum > 0 && tPrice > maxPriceNum) {
                 tPrice = maxPriceNum;
               }
-              if (tPrice < minPriceNum) {
+              if (minPriceNum > 0 && tPrice < minPriceNum) {
                 tPrice = minPriceNum;
               }
               bidInfo.price = tPrice;
@@ -236,7 +304,8 @@ const PlaceOrderCard = (props) => {
                 parseFloat(quantityFilter.stepSize) *
                   parseFloat(priceFilter.tickSize)
               );
-              bidInfo.turnover = parseFloat(tPrice * bidInfo.quantity).toFixed(
+              bidInfo.turnover = customToFixed(
+                parseFloat(tPrice * bidInfo.quantity),
                 turnoverDeciaml
               );
               setBidInfo({ ...bidInfo });
@@ -291,7 +360,8 @@ const PlaceOrderCard = (props) => {
               const decimalCount = computeDecimalCount(quantityFilter.stepSize);
               const maxQtyNum = parseFloat(quantityFilter.maxQty);
               const minQtyNum = parseFloat(quantityFilter.minQty);
-              let tQty = Math.abs(parseFloat(event.target.value)).toFixed(
+              let tQty = customToFixed(
+                Math.abs(parseFloat(event.target.value)),
                 decimalCount
               );
               //
@@ -307,7 +377,8 @@ const PlaceOrderCard = (props) => {
                 parseFloat(quantityFilter.stepSize) *
                   parseFloat(priceFilter.tickSize)
               );
-              bidInfo.turnover = parseFloat(tQty * bidInfo.price).toFixed(
+              bidInfo.turnover = customToFixed(
+                parseFloat(tQty * bidInfo.price),
                 turnoverDeciaml
               );
               bidInfo.percentage = "";
@@ -372,9 +443,12 @@ const PlaceOrderCard = (props) => {
                     );
                     const maxQtyNum = parseFloat(quantityFilter.maxQty);
                     const minQtyNum = parseFloat(quantityFilter.minQty);
-                    let tBalance = Math.abs(
-                      parseFloat(bidInfo.offerBalance) * parseFloat(label)
-                    ).toFixed(decimalCount);
+                    let tBalance = customToFixed(
+                      Math.abs(
+                        parseFloat(bidInfo.offerBalance) * parseFloat(label)
+                      ),
+                      decimalCount
+                    );
                     if (tBalance > maxQtyNum) {
                       tBalance = maxQtyNum;
                     }
@@ -387,9 +461,10 @@ const PlaceOrderCard = (props) => {
                       parseFloat(quantityFilter.stepSize) *
                         parseFloat(priceFilter.tickSize)
                     );
-                    bidInfo.turnover = parseFloat(
-                      tBalance * bidInfo.price
-                    ).toFixed(turnoverDeciaml);
+                    bidInfo.turnover = customToFixed(
+                      parseFloat(tBalance * bidInfo.price),
+                      turnoverDeciaml
+                    );
                     bidInfo.percentage = label;
                     setBidInfo({ ...bidInfo });
                   }}
@@ -476,7 +551,7 @@ const PlaceOrderCard = (props) => {
               },
             }}
             onClick={() => {
-              placeOrder("BUY");
+              placeOrder("BUY", bidInfo.quantity, bidInfo.price);
               // setAlertVisible(true);
             }}
           >
@@ -516,7 +591,8 @@ const PlaceOrderCard = (props) => {
               const decimalCount = computeDecimalCount(priceFilter.tickSize);
               const maxPriceNum = parseFloat(priceFilter.maxPrice);
               const minPriceNum = parseFloat(priceFilter.minPrice);
-              let tPrice = Math.abs(parseFloat(event.target.value)).toFixed(
+              let tPrice = customToFixed(
+                Math.abs(parseFloat(event.target.value)),
                 decimalCount
               );
               if (tPrice > maxPriceNum) {
@@ -531,7 +607,8 @@ const PlaceOrderCard = (props) => {
                 parseFloat(quantityFilter.stepSize) *
                   parseFloat(priceFilter.tickSize)
               );
-              askInfo.turnover = parseFloat(tPrice * askInfo.quantity).toFixed(
+              askInfo.turnover = customToFixed(
+                parseFloat(tPrice * askInfo.quantity),
                 turnoverDeciaml
               );
               setAskInfo({ ...askInfo });
@@ -586,7 +663,8 @@ const PlaceOrderCard = (props) => {
               const decimalCount = computeDecimalCount(quantityFilter.stepSize);
               const maxQtyNum = parseFloat(quantityFilter.maxQty);
               const minQtyNum = parseFloat(quantityFilter.minQty);
-              let tQty = Math.abs(parseFloat(event.target.value)).toFixed(
+              let tQty = customToFixed(
+                Math.abs(parseFloat(event.target.value)),
                 decimalCount
               );
               //
@@ -602,7 +680,8 @@ const PlaceOrderCard = (props) => {
                 parseFloat(quantityFilter.stepSize) *
                   parseFloat(priceFilter.tickSize)
               );
-              askInfo.turnover = parseFloat(tQty * askInfo.price).toFixed(
+              askInfo.turnover = customToFixed(
+                parseFloat(tQty * askInfo.price),
                 turnoverDeciaml
               );
               askInfo.percentage = "";
@@ -667,9 +746,12 @@ const PlaceOrderCard = (props) => {
                     );
                     const maxQtyNum = parseFloat(quantityFilter.maxQty);
                     const minQtyNum = parseFloat(quantityFilter.minQty);
-                    let tQty = Math.abs(
-                      parseFloat(askInfo.offerBalance) * parseFloat(label)
-                    ).toFixed(decimalCount);
+                    let tQty = customToFixed(
+                      Math.abs(
+                        parseFloat(askInfo.offerBalance) * parseFloat(label)
+                      ),
+                      decimalCount
+                    );
                     if (tQty > maxQtyNum) {
                       tQty = maxQtyNum;
                     }
@@ -682,7 +764,8 @@ const PlaceOrderCard = (props) => {
                       parseFloat(quantityFilter.stepSize) *
                         parseFloat(priceFilter.tickSize)
                     );
-                    askInfo.turnover = parseFloat(tQty * askInfo.price).toFixed(
+                    askInfo.turnover = customToFixed(
+                      parseFloat(tQty * askInfo.price),
                       turnoverDeciaml
                     );
                     askInfo.percentage = label;
@@ -770,13 +853,53 @@ const PlaceOrderCard = (props) => {
                 backgroundColor: "rgb(270,75,120)",
               },
             }}
-            onClick={() => {}}
+            onClick={() => {
+              placeOrder("SELL", askInfo.quantity, askInfo.price);
+            }}
           >
             {"卖出" + xglobal.inst().baseAsset}
           </Button>
         </Box>
       </Box>
       {_renderAlertDlg()}
+      <Box
+        sx={{
+          marginTop: "40px",
+          // paddingLeft: "30px",
+          paddingRight: "30px",
+        }}
+      >
+        <Typography
+          sx={{
+            fontSize: "14px",
+            fontFamily: "Saira",
+            fontWeight: "400",
+            color: "rgb(0,0,4)",
+          }}
+        >
+          {"自动下单模式："}
+        </Typography>
+        <Box
+          sx={{
+            display: "flex",
+            flexDirection: "row",
+            paddingLeft:"30px"
+          }}
+        >
+          <FormControlLabel
+            required
+            control={
+              <Switch
+                checked={autoOrder}
+                onChange={(ev) => {
+                  setAutoOrder(ev.target.checked);
+                }}
+              />
+            }
+            label={autoOrder === true ? "已开启" : "已关闭"}
+          />
+        </Box>
+      </Box>
     </Box>
   );
 };

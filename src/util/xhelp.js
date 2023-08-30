@@ -11,6 +11,17 @@ export const computeDecimalCount = (num) => {
   return tNum.toString().split(".")[1].length || 0;
 };
 
+export const customToFixed = (num, decimalCount) => {
+  const tNum = parseFloat(num);
+  const tDecimalCount = parseInt(decimalCount);
+  if(tDecimalCount > 0){
+    const tempCount = Math.pow(10, tDecimalCount);
+    return Math.floor(tNum * tempCount) / tempCount;
+  }
+  return Math.floor(num);
+
+};
+
 export const formateTime = (milliseconds) => {
   let date = new Date(milliseconds);
   return (date.getMonth()+1) + "-" + date.getDate() + " " + date.getHours() + ":" + date.getMinutes();

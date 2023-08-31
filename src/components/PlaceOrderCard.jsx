@@ -26,61 +26,7 @@ const PlaceOrderCard = (props) => {
     quantityFilter,
     notional,
   } = props;
-  const IOSSwitch = styled((props) => (
-    <Switch
-      focusVisibleClassName=".Mui-focusVisible"
-      disableRipple
-      {...props}
-    />
-  ))(({ theme }) => ({
-    width: 42,
-    height: 22,
-    padding: 0,
-    "& .MuiSwitch-switchBase": {
-      padding: 0,
-      margin: 2,
-      transitionDuration: "300ms",
-      "&.Mui-checked": {
-        transform: "translateX(20px)",
-        color: "#fff",
-        "& + .MuiSwitch-track": {
-          backgroundColor:
-            theme.palette.mode === "dark" ? "#1C6CF9" : "#65C466", //'#2ECA45',#65C466
-          opacity: 1,
-          border: 0,
-        },
-        "&.Mui-disabled + .MuiSwitch-track": {
-          opacity: 0.5,
-        },
-      },
-      "&.Mui-focusVisible .MuiSwitch-thumb": {
-        color: "#33cf4d",
-        border: "6px solid #fff",
-      },
-      "&.Mui-disabled .MuiSwitch-thumb": {
-        color:
-          theme.palette.mode === "light"
-            ? theme.palette.grey[100]
-            : theme.palette.grey[600],
-      },
-      "&.Mui-disabled + .MuiSwitch-track": {
-        opacity: theme.palette.mode === "light" ? 0.7 : 0.3,
-      },
-    },
-    "& .MuiSwitch-thumb": {
-      boxSizing: "border-box",
-      width: 18,
-      height: 18,
-    },
-    "& .MuiSwitch-track": {
-      borderRadius: 22 / 2,
-      backgroundColor: theme.palette.mode === "light" ? "#E9E9EA" : "#39393D",
-      opacity: 1,
-      transition: theme.transitions.create(["background-color"], {
-        duration: 500,
-      }),
-    },
-  }));
+
   const [bidInfo, setBidInfo] = useState({
     price: "",
     offerBalance: "0",
@@ -96,7 +42,7 @@ const PlaceOrderCard = (props) => {
     turnover: "",
   });
 
-  const [autoOrder, setAutoOrder] = useState(true);
+  const [autoOrder, setAutoOrder] = useState(false);
   const [alertVisible, setAlertVisible] = useState(false);
   //
   useEffect(() => {
@@ -105,7 +51,7 @@ const PlaceOrderCard = (props) => {
         return item.symbol === xglobal.inst().symbol;
       });
       if (symbolFilters.length === 0) {
-        console.log("autoOrder", quantityFilter);
+        console.log("auto order");
         //没有订单，自动下单
         const decimalCount = computeDecimalCount(quantityFilter.stepSize);
         const maxQtyNum = parseFloat(quantityFilter.maxQty);
@@ -116,24 +62,24 @@ const PlaceOrderCard = (props) => {
           parseFloat(askInfo.offerBalance) > minQtyNum
         ) {
         } else {
-          if (parseFloat(bidInfo.offerBalance) > minQtyNum) {
-            let tBalance = customToFixed(
-              Math.abs(parseFloat(bidInfo.offerBalance)),
+          if (parseFloat(bidInfo.offerBalance) > minQtyNum && bidList.length > 0) {
+            const item = bidList[0];
+            const price = parseFloat(item[0]);
+            let tQty = customToFixed(
+              Math.abs(parseFloat(bidInfo.offerBalance) / parseFloat(price)),
               decimalCount
             );
-            if (tBalance > maxQtyNum) {
-              tBalance = maxQtyNum;
+            if (tQty > maxQtyNum) {
+              tQty = maxQtyNum;
             }
-            if (tBalance < minQtyNum) {
-              tBalance = minQtyNum;
+            if (tQty < minQtyNum) {
+              tQty = minQtyNum;
             }
-            if (bidList.length > 0) {
-              const item = bidList[0];
-              const price = parseFloat(item[0]);
-              placeOrder("BUY", tBalance, price);
-            }
+            placeOrder("BUY", tQty, price);
           }
-          if (parseFloat(askInfo.offerBalance) > minQtyNum) {
+          if (parseFloat(askInfo.offerBalance) > minQtyNum && askList.length > 0) {
+            const item = askList[askList.length - 1];
+            const price = parseFloat(item[0]);
             let tBalance = customToFixed(
               Math.abs(parseFloat(askInfo.offerBalance)),
               decimalCount
@@ -144,11 +90,7 @@ const PlaceOrderCard = (props) => {
             if (tBalance < minQtyNum) {
               tBalance = minQtyNum;
             }
-            if (askList.length > 0) {
-              const item = askList[askList.length - 1];
-              const price = parseFloat(item[0]);
-              placeOrder("SELL", tBalance, price);
-            }
+            placeOrder("SELL", tBalance, price);
           }
         }
       } else {
@@ -305,7 +247,7 @@ const PlaceOrderCard = (props) => {
                   parseFloat(priceFilter.tickSize)
               );
               bidInfo.turnover = customToFixed(
-                parseFloat(tPrice * bidInfo.quantity),
+                parseFloat(tPrice) * parseFloat(bidInfo.quantity),
                 turnoverDeciaml
               );
               setBidInfo({ ...bidInfo });
@@ -372,15 +314,17 @@ const PlaceOrderCard = (props) => {
                 tQty = minQtyNum;
               }
               //
-              bidInfo.quantity = tQty;
               const turnoverDeciaml = computeDecimalCount(
                 parseFloat(quantityFilter.stepSize) *
                   parseFloat(priceFilter.tickSize)
               );
-              bidInfo.turnover = customToFixed(
-                parseFloat(tQty * bidInfo.price),
+              let tTurnover = customToFixed(
+                parseFloat(tQty) * parseFloat(bidInfo.price),
                 turnoverDeciaml
               );
+              //
+              bidInfo.turnover = tTurnover;
+              bidInfo.quantity = tQty;
               bidInfo.percentage = "";
               setBidInfo({ ...bidInfo });
             }}
@@ -438,33 +382,27 @@ const PlaceOrderCard = (props) => {
                   }}
                   key={"percentage-" + index}
                   onClick={() => {
-                    const decimalCount = computeDecimalCount(
-                      quantityFilter.stepSize
-                    );
-                    const maxQtyNum = parseFloat(quantityFilter.maxQty);
-                    const minQtyNum = parseFloat(quantityFilter.minQty);
-                    let tBalance = customToFixed(
-                      Math.abs(
-                        parseFloat(bidInfo.offerBalance) * parseFloat(label)
-                      ),
-                      decimalCount
-                    );
-                    if (tBalance > maxQtyNum) {
-                      tBalance = maxQtyNum;
-                    }
-                    if (tBalance < minQtyNum) {
-                      tBalance = minQtyNum;
-                    }
-                    bidInfo.quantity = tBalance;
-                    //
                     const turnoverDeciaml = computeDecimalCount(
                       parseFloat(quantityFilter.stepSize) *
                         parseFloat(priceFilter.tickSize)
                     );
-                    bidInfo.turnover = customToFixed(
-                      parseFloat(tBalance * bidInfo.price),
+                    let tTurnover = customToFixed(
+                      parseFloat(bidInfo.offerBalance) * parseFloat(label),
                       turnoverDeciaml
                     );
+                    //
+                    const decimalCount = computeDecimalCount(
+                      quantityFilter.stepSize
+                    );
+                    let tQty = customToFixed(
+                      Math.abs(
+                        parseFloat(tTurnover) / parseFloat(bidInfo.price)
+                      ),
+                      decimalCount
+                    );
+                    //
+                    bidInfo.quantity = tQty;
+                    bidInfo.turnover = tTurnover;
                     bidInfo.percentage = label;
                     setBidInfo({ ...bidInfo });
                   }}
@@ -503,7 +441,24 @@ const PlaceOrderCard = (props) => {
             type="number"
             value={bidInfo.turnover}
             onChange={(e) => {
-              bidInfo.turnover = e.target.value;
+              const turnoverDeciaml = computeDecimalCount(
+                parseFloat(quantityFilter.stepSize) *
+                  parseFloat(priceFilter.tickSize)
+              );
+              let tTurnover = customToFixed(
+                parseFloat(e.target.value),
+                turnoverDeciaml
+              );
+              //
+              const decimalCount = computeDecimalCount(quantityFilter.stepSize);
+              let tQty = customToFixed(
+                Math.abs(parseFloat(tTurnover) / parseFloat(bidInfo.price)),
+                decimalCount
+              );
+              //
+              bidInfo.turnover = tTurnover;
+              bidInfo.quantity = tQty;
+              bidInfo.percentage = "";
               setBidInfo({ ...bidInfo });
             }}
             InputProps={{
@@ -595,10 +550,10 @@ const PlaceOrderCard = (props) => {
                 Math.abs(parseFloat(event.target.value)),
                 decimalCount
               );
-              if (tPrice > maxPriceNum) {
+              if (maxPriceNum > 0 && tPrice > maxPriceNum) {
                 tPrice = maxPriceNum;
               }
-              if (tPrice < minPriceNum) {
+              if (minPriceNum > 0 && tPrice < minPriceNum) {
                 tPrice = minPriceNum;
               }
               askInfo.price = tPrice;
@@ -608,7 +563,7 @@ const PlaceOrderCard = (props) => {
                   parseFloat(priceFilter.tickSize)
               );
               askInfo.turnover = customToFixed(
-                parseFloat(tPrice * askInfo.quantity),
+                parseFloat(tPrice) * parseFloat(askInfo.quantity),
                 turnoverDeciaml
               );
               setAskInfo({ ...askInfo });
@@ -667,7 +622,6 @@ const PlaceOrderCard = (props) => {
                 Math.abs(parseFloat(event.target.value)),
                 decimalCount
               );
-              //
               if (tQty > maxQtyNum) {
                 tQty = maxQtyNum;
               }
@@ -675,15 +629,17 @@ const PlaceOrderCard = (props) => {
                 tQty = minQtyNum;
               }
               //
-              askInfo.quantity = tQty;
               const turnoverDeciaml = computeDecimalCount(
                 parseFloat(quantityFilter.stepSize) *
                   parseFloat(priceFilter.tickSize)
               );
-              askInfo.turnover = customToFixed(
-                parseFloat(tQty * askInfo.price),
+              let tTurnover = customToFixed(
+                parseFloat(tQty) * parseFloat(askInfo.price),
                 turnoverDeciaml
               );
+              //
+              askInfo.turnover = tTurnover;
+              askInfo.quantity = tQty;
               askInfo.percentage = "";
               setAskInfo({ ...askInfo });
             }}
@@ -744,30 +700,24 @@ const PlaceOrderCard = (props) => {
                     const decimalCount = computeDecimalCount(
                       quantityFilter.stepSize
                     );
-                    const maxQtyNum = parseFloat(quantityFilter.maxQty);
-                    const minQtyNum = parseFloat(quantityFilter.minQty);
                     let tQty = customToFixed(
                       Math.abs(
                         parseFloat(askInfo.offerBalance) * parseFloat(label)
                       ),
                       decimalCount
                     );
-                    if (tQty > maxQtyNum) {
-                      tQty = maxQtyNum;
-                    }
-                    if (tQty < minQtyNum) {
-                      tQty = minQtyNum;
-                    }
-                    askInfo.quantity = tQty;
                     //
                     const turnoverDeciaml = computeDecimalCount(
                       parseFloat(quantityFilter.stepSize) *
                         parseFloat(priceFilter.tickSize)
                     );
-                    askInfo.turnover = customToFixed(
-                      parseFloat(tQty * askInfo.price),
+                    let tTurnover = customToFixed(
+                      parseFloat(tQty) * parseFloat(askInfo.price),
                       turnoverDeciaml
                     );
+                    //
+                    askInfo.quantity = tQty;
+                    askInfo.turnover = tTurnover;
                     askInfo.percentage = label;
                     setAskInfo({ ...askInfo });
                   }}
@@ -806,8 +756,29 @@ const PlaceOrderCard = (props) => {
             type="number"
             value={askInfo.turnover}
             onChange={(e) => {
-              askInfo.turnover = e.target.value;
-              setBidInfo({ ...askInfo });
+              const turnoverDeciaml = computeDecimalCount(
+                parseFloat(quantityFilter.stepSize) *
+                  parseFloat(priceFilter.tickSize)
+              );
+              let tTurnover = customToFixed(
+                parseFloat(e.target.value),
+                turnoverDeciaml
+              );
+              //
+              const decimalCount = computeDecimalCount(
+                quantityFilter.stepSize
+              );
+              let tQty = customToFixed(
+                Math.abs(
+                  tTurnover / parseFloat(bidInfo.price)
+                ),
+                decimalCount
+              );
+              //
+              askInfo.quantity = tQty;
+              askInfo.turnover = tTurnover;
+              askInfo.percentage = "";
+              setAskInfo({ ...askInfo });
             }}
             InputProps={{
               inputProps: {
@@ -883,7 +854,7 @@ const PlaceOrderCard = (props) => {
           sx={{
             display: "flex",
             flexDirection: "row",
-            paddingLeft:"30px"
+            paddingLeft: "30px",
           }}
         >
           <FormControlLabel

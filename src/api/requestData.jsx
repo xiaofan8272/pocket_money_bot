@@ -43,7 +43,7 @@ export function getUserAsset(timestamp, apiKey, sig) {
   });
 }
 
-export function tickerPrice() {
+export function requestTickerPrice() {
   return Requset({
     method: "get",
     url: xglobal.inst().baseUrl + "/api/v3/ticker/price",

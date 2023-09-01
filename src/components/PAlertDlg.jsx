@@ -1,18 +1,13 @@
 import React, { useEffect, useState } from "react";
 import "./PAlertDlg.scss";
-
-import Stack from "@mui/material/Stack";
-import TextField from "@mui/material/TextField";
 import Dialog from "@mui/material/Dialog";
 import Box from "@mui/material/Box";
 import Button from "@mui/material/Button";
 import Typography from "@mui/material/Typography";
-import Checkbox from "@mui/material/Checkbox";
 import DialogContent from '@mui/material/DialogContent';
 import ErrorOutlineIcon from '@mui/icons-material/ErrorOutline';
 import { pink } from '@mui/material/colors';
 const PAlertDlg = (props) => {
-  const [content, setContent] = React.useState("");
   useEffect(() => { }, []);
 
   const handleDialogClose = () => {
@@ -44,7 +39,7 @@ const PAlertDlg = (props) => {
             color: "rgb(51,54,57)",
           }}
         >
-          {"下单总金额大于10 USDT，请调整后再试一次。"}
+          {props.content}
         </Typography>
         </DialogContent>
         <Button
@@ -67,7 +62,7 @@ const PAlertDlg = (props) => {
             handleDialogClose();
           }}
         >
-          {"取消"}
+          {"确定"}
         </Button>
       </Box>
     </Dialog>

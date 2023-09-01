@@ -21,6 +21,7 @@ const PlaceOrderCard = (props) => {
     orders,
     bidList,
     askList,
+    tarPrice,
     userAssets,
     priceFilter,
     quantityFilter,
@@ -30,20 +31,20 @@ const PlaceOrderCard = (props) => {
   const [bidInfo, setBidInfo] = useState({
     price: "",
     offerBalance: "0",
-    quantity: "",
+    quantity: "0",
     percentage: "",
-    turnover: "",
+    turnover: "0",
   });
   const [askInfo, setAskInfo] = useState({
     price: "",
     offerBalance: "0",
-    quantity: "",
+    quantity: "0",
     percentage: "",
-    turnover: "",
+    turnover: "0",
   });
 
   const [autoOrder, setAutoOrder] = useState(false);
-  const [alertVisible, setAlertVisible] = useState(false);
+  const [alertInfo, setAlertInfo] = useState({ visible: false, content: "" });
   //
   useEffect(() => {
     if (autoOrder && parseFloat(quantityFilter.maxQty) > 0) {
@@ -62,7 +63,10 @@ const PlaceOrderCard = (props) => {
           parseFloat(askInfo.offerBalance) > minQtyNum
         ) {
         } else {
-          if (parseFloat(bidInfo.offerBalance) > minQtyNum && bidList.length > 0) {
+          if (
+            parseFloat(bidInfo.offerBalance) > minQtyNum &&
+            bidList.length > 0
+          ) {
             const item = bidList[0];
             const price = parseFloat(item[0]);
             let tQty = customToFixed(
@@ -77,7 +81,10 @@ const PlaceOrderCard = (props) => {
             }
             placeOrder("BUY", tQty, price);
           }
-          if (parseFloat(askInfo.offerBalance) > minQtyNum && askList.length > 0) {
+          if (
+            parseFloat(askInfo.offerBalance) > minQtyNum &&
+            askList.length > 0
+          ) {
             const item = askList[askList.length - 1];
             const price = parseFloat(item[0]);
             let tBalance = customToFixed(
@@ -121,6 +128,13 @@ const PlaceOrderCard = (props) => {
     }
   }, [userAssets]);
 
+  useEffect(() => {
+    bidInfo.price = tarPrice;
+    setBidInfo({ ...bidInfo });
+    askInfo.price = tarPrice;
+    setAskInfo({ ...askInfo });
+  }, [tarPrice]);
+
   const placeOrder = (side, quantity, price) => {
     if (apiKey.length === 0 || apiSecret.length === 0) {
       return;
@@ -156,29 +170,15 @@ const PlaceOrderCard = (props) => {
       });
   };
 
-  const _bidPrice = () => {
-    if (bidInfo.price.length === 0) {
-      // return price.length === 0 ? "" : parseFloat(price);
-      return 1.0;
-    }
-    return parseFloat(bidInfo.price);
-  };
-
-  const _askPrice = () => {
-    if (askInfo.price.length === 0) {
-      // return price.length === 0 ? "" : parseFloat(price);
-      return 1.0;
-    }
-    return parseFloat(askInfo.price);
-  };
-
   const _renderAlertDlg = () => {
     return (
       <PAlertDlg
-        open={alertVisible}
-        // note={openReport.note}
+        open={alertInfo.visible}
+        content={alertInfo.content}
         close={() => {
-          setAlertVisible(false);
+          alertInfo.visible = false;
+          alertInfo.content = "";
+          setAlertInfo({ ...alertInfo });
         }}
       />
     );
@@ -225,7 +225,7 @@ const PlaceOrderCard = (props) => {
               },
             }}
             type="number"
-            value={_bidPrice()}
+            value={bidInfo.price}
             onChange={(event) => {
               const decimalCount = computeDecimalCount(priceFilter.tickSize);
               const maxPriceNum = parseFloat(priceFilter.maxPrice);
@@ -395,9 +395,7 @@ const PlaceOrderCard = (props) => {
                       quantityFilter.stepSize
                     );
                     let tQty = customToFixed(
-                      Math.abs(
-                        parseFloat(tTurnover) / parseFloat(bidInfo.price)
-                      ),
+                      Math.abs(parseFloat(tTurnover) / parseFloat(bidInfo.price)),
                       decimalCount
                     );
                     //
@@ -506,8 +504,93 @@ const PlaceOrderCard = (props) => {
               },
             }}
             onClick={() => {
-              placeOrder("BUY", bidInfo.quantity, bidInfo.price);
-              // setAlertVisible(true);
+              //过滤
+              const maxQtyNum = parseFloat(quantityFilter.maxQty);
+              const minQtyNum = parseFloat(quantityFilter.minQty);
+              let canOrder = true;
+              let alerContent = "";
+              if (bidInfo.quantity.length > 0) {
+                alerContent = "请输入下单数量";
+                canOrder = false;
+              }
+              if (bidInfo.quantity > maxQtyNum) {
+                alerContent =
+                  "下单数量大于" +
+                  maxQtyNum +
+                  " " +
+                  xglobal.inst().baseAsset +
+                  "，请调整后再试一次";
+                canOrder = false;
+              }
+              if (bidInfo.quantity < minQtyNum) {
+                alerContent =
+                  "下单数量小于" +
+                  minQtyNum +
+                  " " +
+                  xglobal.inst().baseAsset +
+                  "，请调整后再试一次";
+                canOrder = false;
+              }
+              const maxPriceNum = parseFloat(priceFilter.maxPrice);
+              const minPriceNum = parseFloat(priceFilter.minPrice);
+              const price = bidInfo.price;
+              if (price.length > 0) {
+                alerContent = "请输入下单单价";
+                canOrder = false;
+              }
+              if (maxPriceNum > 0 && price > maxPriceNum) {
+                alerContent =
+                  "下单单价大于" +
+                  maxPriceNum +
+                  " " +
+                  xglobal.inst().quoteAsset +
+                  "，请调整后再试一次";
+                canOrder = false;
+              }
+              if (minPriceNum > 0 && price < minPriceNum) {
+                alerContent =
+                  "下单单价小于" +
+                  minPriceNum +
+                  " " +
+                  xglobal.inst().quoteAsset +
+                  "，请调整后再试一次";
+                canOrder = false;
+              }
+              const maxNotional = parseFloat(notional.maxNotional);
+              const minNotional = parseFloat(notional.minNotional);
+              if (bidInfo.turnover > maxNotional) {
+                alerContent =
+                  "下单总金额大于" +
+                  maxNotional +
+                  " " +
+                  xglobal.inst().quoteAsset +
+                  "，请调整后再试一次";
+                canOrder = false;
+              }
+              if (bidInfo.turnover < minNotional) {
+                alerContent =
+                  "下单总金额小于" +
+                  minNotional +
+                  " " +
+                  xglobal.inst().quoteAsset +
+                  "，请调整后再试一次";
+                canOrder = false;
+              }
+              if (bidInfo.turnover > askInfo.offerBalance) {
+                alerContent =
+                  "下单总金额大于 " +
+                  xglobal.inst().quoteAsset +
+                  " 可用余额，请调整后再试一次";
+                canOrder = false;
+              }
+
+              if (canOrder === false) {
+                alertInfo.visible = true;
+                alertInfo.content = alerContent;
+                setAlertInfo({ ...alertInfo });
+                return;
+              }
+              placeOrder("BUY", bidInfo.quantity, price);
             }}
           >
             {"买入" + xglobal.inst().baseAsset}
@@ -541,7 +624,7 @@ const PlaceOrderCard = (props) => {
               },
             }}
             type="number"
-            value={_askPrice()}
+            value={askInfo.price}
             onChange={(event) => {
               const decimalCount = computeDecimalCount(priceFilter.tickSize);
               const maxPriceNum = parseFloat(priceFilter.maxPrice);
@@ -615,6 +698,7 @@ const PlaceOrderCard = (props) => {
             type="number"
             value={askInfo.quantity}
             onChange={(event) => {
+              console.log("quantityFilter", quantityFilter);
               const decimalCount = computeDecimalCount(quantityFilter.stepSize);
               const maxQtyNum = parseFloat(quantityFilter.maxQty);
               const minQtyNum = parseFloat(quantityFilter.minQty);
@@ -628,7 +712,7 @@ const PlaceOrderCard = (props) => {
               if (tQty < minQtyNum) {
                 tQty = minQtyNum;
               }
-              //
+
               const turnoverDeciaml = computeDecimalCount(
                 parseFloat(quantityFilter.stepSize) *
                   parseFloat(priceFilter.tickSize)
@@ -765,13 +849,9 @@ const PlaceOrderCard = (props) => {
                 turnoverDeciaml
               );
               //
-              const decimalCount = computeDecimalCount(
-                quantityFilter.stepSize
-              );
+              const decimalCount = computeDecimalCount(quantityFilter.stepSize);
               let tQty = customToFixed(
-                Math.abs(
-                  tTurnover / parseFloat(bidInfo.price)
-                ),
+                Math.abs(tTurnover / parseFloat(askInfo.price)),
                 decimalCount
               );
               //
@@ -825,7 +905,94 @@ const PlaceOrderCard = (props) => {
               },
             }}
             onClick={() => {
-              placeOrder("SELL", askInfo.quantity, askInfo.price);
+              //过滤
+              const maxQtyNum = parseFloat(quantityFilter.maxQty);
+              const minQtyNum = parseFloat(quantityFilter.minQty);
+              let canOrder = true;
+              let alerContent = "";
+              if (askInfo.quantity.length > 0) {
+                alerContent = "请输入下单数量";
+                canOrder = false;
+              }
+              if (askInfo.quantity > maxQtyNum) {
+                alerContent =
+                  "下单数量大于" +
+                  maxQtyNum +
+                  " " +
+                  xglobal.inst().baseAsset +
+                  "，请调整后再试一次";
+                canOrder = false;
+              }
+              if (askInfo.quantity < minQtyNum) {
+                alerContent =
+                  "下单数量小于" +
+                  minQtyNum +
+                  " " +
+                  xglobal.inst().baseAsset +
+                  "，请调整后再试一次";
+                canOrder = false;
+              }
+              if (askInfo.quantity > bidInfo.offerBalance) {
+                alerContent =
+                  "下单数量大于 " +
+                  xglobal.inst().baseAsset +
+                  " 可用余额，请调整后再试一次";
+                canOrder = false;
+              }
+              const maxPriceNum = parseFloat(priceFilter.maxPrice);
+              const minPriceNum = parseFloat(priceFilter.minPrice);
+              const price = askInfo.price;
+              if (price.length > 0) {
+                alerContent = "请输入下单单价";
+                canOrder = false;
+              }
+              if (maxPriceNum > 0 && price > maxPriceNum) {
+                alerContent =
+                  "下单单价大于" +
+                  maxPriceNum +
+                  " " +
+                  xglobal.inst().quoteAsset +
+                  "，请调整后再试一次";
+                canOrder = false;
+              }
+              if (minPriceNum > 0 && price < minPriceNum) {
+                alerContent =
+                  "下单单价小于" +
+                  minPriceNum +
+                  " " +
+                  xglobal.inst().quoteAsset +
+                  "，请调整后再试一次";
+                canOrder = false;
+              }
+              const maxNotional = parseFloat(notional.maxNotional);
+              const minNotional = parseFloat(notional.minNotional);
+              if (askInfo.turnover > maxNotional) {
+                alerContent =
+                  "下单总金额大于" +
+                  maxNotional +
+                  " " +
+                  xglobal.inst().quoteAsset +
+                  "，请调整后再试一次";
+                canOrder = false;
+              }
+              if (askInfo.turnover < minNotional) {
+                alerContent =
+                  "下单总金额小于" +
+                  minNotional +
+                  " " +
+                  xglobal.inst().quoteAsset +
+                  "，请调整后再试一次";
+                canOrder = false;
+              }
+
+              if (canOrder === false) {
+                alertInfo.visible = true;
+                alertInfo.content = alerContent;
+                setAlertInfo({ ...alertInfo });
+                return;
+              }
+
+              placeOrder("SELL", askInfo.quantity, price);
             }}
           >
             {"卖出" + xglobal.inst().baseAsset}

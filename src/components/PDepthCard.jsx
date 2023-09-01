@@ -53,6 +53,10 @@ const PDepthItem = (props) => {
           display: "flex",
           flexDirection: "row",
           justifyContent: "space-between",
+          cursor: "pointer",
+        }}
+        onClick={() => {
+          props.onClickCallback(parseFloat(item[0]));
         }}
       >
         <Typography
@@ -81,7 +85,7 @@ const PDepthItem = (props) => {
 };
 
 const PDepthCard = (props) => {
-  const { bidList, askList, price, orders } = props;
+  const { bidList, askList, tickerPrice, orders } = props;
 
   const renderAskList = () => {
     return askList.length > 0 ? (
@@ -93,6 +97,9 @@ const PDepthCard = (props) => {
               type="ASK"
               item={item}
               orders={orders}
+              onClickCallback={(price)=>{
+                props.onClickCallback(price);
+              }}
             />
           );
         })}
@@ -112,6 +119,9 @@ const PDepthCard = (props) => {
               type="BID"
               item={item}
               orders={orders}
+              onClickCallback={(price)=>{
+                props.onClickCallback(price);
+              }}
             />
           );
         })}
@@ -134,7 +144,7 @@ const PDepthCard = (props) => {
           justifyContent: "flex-start",
         }}
       >
-        {price.length > 0 ? (
+        {tickerPrice.length > 0 ? (
           <Typography
             sx={{
               fontSize: "16px",
@@ -143,7 +153,7 @@ const PDepthCard = (props) => {
               color: "rgb(0,0,4)",
             }}
           >
-            {parseFloat(price)}
+            {parseFloat(tickerPrice)}
           </Typography>
         ) : (
           <Skeleton animation="wave" width={"80%"} height={"60%"} />

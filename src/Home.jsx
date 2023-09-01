@@ -16,7 +16,7 @@ import {
   exchangeInfo,
   openOrders,
   depthInfo,
-  tickerPrice,
+  requestTickerPrice,
 } from "./api/requestData";
 import xglobal from "./util/xglobal";
 import { defBaseUrl, baseUrlList } from "./util/xdef";
@@ -45,14 +45,17 @@ function Home() {
     maxNotional: "",
     minNotional: "",
   });
-  const [curPrice, setCurPrice] = useState("");
-
+  const [tickerPrice, setTickerPrice] = useState("");
+  const [tarPriceInfo, setTarPriceInfo] = useState({
+    price: "1.0000",
+    init: false,
+  });
   useInterval(() => {
     fetchUserAsset();
     fetchOpenOrders();
     fetchDepthInfo();
     fetchTickerPrice();
-  }, 8000);
+  }, 5000);
 
   useEffect(() => {
     fetchExchangeInfo();
@@ -78,7 +81,7 @@ function Home() {
   const fetchExchangeInfo = () => {
     exchangeInfo()
       .then((response) => {
-        console.log(response);
+        console.log("exchange info", response);
         const exchange = response;
         const filters = exchange["symbols"][0]["filters"];
         const priceFilters = filters.filter((item) => {
@@ -131,9 +134,17 @@ function Home() {
       .then((response) => {
         console.log(response);
         let asks = response["asks"];
-        setAskList(asks.reverse());
+        let asks_reverse = asks.reverse();
+        setAskList(asks_reverse);
         let bids = response["bids"];
         setBidList(bids);
+        if (tarPriceInfo.init === false && asks_reverse.length > 0) {
+          const item = askList[asks_reverse.length - 1];
+          const price = parseFloat(item[0]);
+          tarPriceInfo.init = true;
+          tarPriceInfo.price = price;
+          setTarPriceInfo({ ...tarPriceInfo });
+        }
       })
       .catch((err) => {
         console.log(String(err));
@@ -141,10 +152,10 @@ function Home() {
   };
 
   const fetchTickerPrice = () => {
-    tickerPrice()
+    requestTickerPrice()
       .then((response) => {
         console.log(response);
-        setCurPrice(response["price"]);
+        setTickerPrice(response["price"]);
       })
       .catch((err) => {
         console.log(String(err));
@@ -191,8 +202,12 @@ function Home() {
             <PDepthCard
               bidList={bidList}
               askList={askList}
-              price={curPrice}
+              tickerPrice={tickerPrice}
               orders={orders}
+              onClickCallback={(price) => {
+                tarPriceInfo.price = price;
+                setTarPriceInfo({ ...tarPriceInfo });
+              }}
             />
             <PlaceOrderCard
               apiKey={apiKey}
@@ -200,6 +215,7 @@ function Home() {
               orders={orders}
               bidList={bidList}
               askList={askList}
+              tarPrice={tarPriceInfo.price}
               userAssets={userAssets}
               priceFilter={priceFilter}
               quantityFilter={quantityFilter}

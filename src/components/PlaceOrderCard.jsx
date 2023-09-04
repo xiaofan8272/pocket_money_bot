@@ -1,7 +1,6 @@
 import React, { useEffect, useState } from "react";
 import "./PlaceOrderCard.scss";
 import PAlertDlg from "./PAlertDlg";
-import { styled } from "@mui/material/styles";
 import Box from "@mui/material/Box";
 import Typography from "@mui/material/Typography";
 import TextField from "@mui/material/TextField";
@@ -27,7 +26,7 @@ const PlaceOrderCard = (props) => {
     quantityFilter,
     notional,
   } = props;
-
+  let isOrdering = false;
   const [bidInfo, setBidInfo] = useState({
     price: "",
     offerBalance: "0",
@@ -47,12 +46,12 @@ const PlaceOrderCard = (props) => {
   const [alertInfo, setAlertInfo] = useState({ visible: false, content: "" });
   //
   useEffect(() => {
-    if (autoOrder && parseFloat(quantityFilter.maxQty) > 0) {
+    if (autoOrder === true && parseFloat(quantityFilter.maxQty) > 0) {
       const symbolFilters = orders.filter((item) => {
         return item.symbol === xglobal.inst().symbol;
       });
       if (symbolFilters.length === 0) {
-        console.log("auto order");
+        console.log("************* AUTO ORDER *************");
         //没有订单，自动下单
         const decimalCount = computeDecimalCount(quantityFilter.stepSize);
         const maxQtyNum = parseFloat(quantityFilter.maxQty);
@@ -60,45 +59,39 @@ const PlaceOrderCard = (props) => {
 
         if (
           parseFloat(bidInfo.offerBalance) > minQtyNum &&
-          parseFloat(askInfo.offerBalance) > minQtyNum
+          bidList.length > 0
         ) {
-        } else {
-          if (
-            parseFloat(bidInfo.offerBalance) > minQtyNum &&
-            bidList.length > 0
-          ) {
-            const item = bidList[0];
-            const price = parseFloat(item[0]);
-            let tQty = customToFixed(
-              Math.abs(parseFloat(bidInfo.offerBalance) / parseFloat(price)),
-              decimalCount
-            );
-            if (tQty > maxQtyNum) {
-              tQty = maxQtyNum;
-            }
-            if (tQty < minQtyNum) {
-              tQty = minQtyNum;
-            }
-            placeOrder("BUY", tQty, price);
+          const item = bidList[0];
+          const price = parseFloat(item[0]);
+          let tQty = customToFixed(
+            Math.abs(parseFloat(bidInfo.offerBalance) / parseFloat(price)),
+            decimalCount
+          );
+          if (tQty > maxQtyNum) {
+            tQty = maxQtyNum;
           }
-          if (
-            parseFloat(askInfo.offerBalance) > minQtyNum &&
-            askList.length > 0
-          ) {
-            const item = askList[askList.length - 1];
-            const price = parseFloat(item[0]);
-            let tBalance = customToFixed(
-              Math.abs(parseFloat(askInfo.offerBalance)),
-              decimalCount
-            );
-            if (tBalance > maxQtyNum) {
-              tBalance = maxQtyNum;
-            }
-            if (tBalance < minQtyNum) {
-              tBalance = minQtyNum;
-            }
-            placeOrder("SELL", tBalance, price);
+          if (tQty < minQtyNum) {
+            tQty = minQtyNum;
           }
+          placeOrder("BUY", tQty, price);
+        }
+        if (
+          parseFloat(askInfo.offerBalance) > minQtyNum &&
+          askList.length > 0
+        ) {
+          const item = askList[askList.length - 1];
+          const price = parseFloat(item[0]);
+          let tBalance = customToFixed(
+            Math.abs(parseFloat(askInfo.offerBalance)),
+            decimalCount
+          );
+          if (tBalance > maxQtyNum) {
+            tBalance = maxQtyNum;
+          }
+          if (tBalance < minQtyNum) {
+            tBalance = minQtyNum;
+          }
+          placeOrder("SELL", tBalance, price);
         }
       } else {
         //已有订单，判断下是否需要撤销订单，然后重新下单
@@ -139,6 +132,10 @@ const PlaceOrderCard = (props) => {
     if (apiKey.length === 0 || apiSecret.length === 0) {
       return;
     }
+    if (isOrdering === true) {
+      return;
+    }
+    isOrdering = true;
     const timestamp = new Date().getTime();
     let message =
       "symbol=" +
@@ -164,9 +161,20 @@ const PlaceOrderCard = (props) => {
     )
       .then((response) => {
         console.log(response);
+        isOrdering = false;
+        if (side === "BUY") {
+          bidInfo.offerBalance =
+            parseFloat(bidInfo.offerBalance) - parseFloat(quantity);
+          setBidInfo({ ...bidInfo });
+        } else {
+          askInfo.offerBalance =
+            parseFloat(askInfo.offerBalance) - parseFloat(quantity);
+          setAskInfo({ ...askInfo });
+        }
       })
       .catch((err) => {
         console.log(String(err));
+        isOrdering = false;
       });
   };
 
@@ -395,7 +403,9 @@ const PlaceOrderCard = (props) => {
                       quantityFilter.stepSize
                     );
                     let tQty = customToFixed(
-                      Math.abs(parseFloat(tTurnover) / parseFloat(bidInfo.price)),
+                      Math.abs(
+                        parseFloat(tTurnover) / parseFloat(bidInfo.price)
+                      ),
                       decimalCount
                     );
                     //

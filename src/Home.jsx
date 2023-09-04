@@ -51,10 +51,11 @@ function Home() {
     init: false,
   });
   useInterval(() => {
-    fetchUserAsset();
-    fetchOpenOrders();
+    console.log("============ POCKET MONEY UPDATE ============");
     fetchDepthInfo();
     fetchTickerPrice();
+    fetchUserAsset();
+    fetchOpenOrders();
   }, 5000);
 
   useEffect(() => {
@@ -70,7 +71,7 @@ function Home() {
     let sig = signature(message, apiSecret);
     getUserAsset(timestamp, apiKey, sig)
       .then((response) => {
-        console.log(response);
+        console.log("************* USER ASSETS *************", response);
         setUserAssets(response);
       })
       .catch((err) => {
@@ -81,7 +82,7 @@ function Home() {
   const fetchExchangeInfo = () => {
     exchangeInfo()
       .then((response) => {
-        console.log("exchange info", response);
+        console.log("************* EXCHANGE INFO *************", response);
         const exchange = response;
         const filters = exchange["symbols"][0]["filters"];
         const priceFilters = filters.filter((item) => {
@@ -121,7 +122,7 @@ function Home() {
     let sig = signature(message, apiSecret);
     openOrders(timestamp, apiKey, sig)
       .then((response) => {
-        console.log(response);
+        console.log("************* OPENED ORDERS *************", response);
         setOrders(response);
       })
       .catch((err) => {
@@ -132,7 +133,7 @@ function Home() {
   const fetchDepthInfo = () => {
     depthInfo()
       .then((response) => {
-        console.log(response);
+        console.log("************* DEPTH INFO *************", response);
         let asks = response["asks"];
         let asks_reverse = asks.reverse();
         setAskList(asks_reverse);
@@ -154,7 +155,7 @@ function Home() {
   const fetchTickerPrice = () => {
     requestTickerPrice()
       .then((response) => {
-        console.log(response);
+        console.log("************* TICKER PRICE *************", response);
         setTickerPrice(response["price"]);
       })
       .catch((err) => {

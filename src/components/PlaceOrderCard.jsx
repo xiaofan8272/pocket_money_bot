@@ -46,55 +46,42 @@ const PlaceOrderCard = (props) => {
   const [alertInfo, setAlertInfo] = useState({ visible: false, content: "" });
   //
   useEffect(() => {
-    if (autoOrder === true && parseFloat(quantityFilter.maxQty) > 0) {
-      const symbolFilters = orders.filter((item) => {
-        return item.symbol === xglobal.inst().symbol;
-      });
-      if (symbolFilters.length === 0) {
-        console.log("************* AUTO ORDER *************");
-        //没有订单，自动下单
-        const decimalCount = computeDecimalCount(quantityFilter.stepSize);
-        const maxQtyNum = parseFloat(quantityFilter.maxQty);
-        const minQtyNum = parseFloat(quantityFilter.minQty);
-
-        if (
-          parseFloat(bidInfo.offerBalance) > minQtyNum &&
-          bidList.length > 0
-        ) {
-          const item = bidList[0];
-          const price = parseFloat(item[0]);
-          let tQty = customToFixed(
-            Math.abs(parseFloat(bidInfo.offerBalance) / parseFloat(price)),
-            decimalCount
-          );
-          if (tQty > maxQtyNum) {
-            tQty = maxQtyNum;
-          }
-          if (tQty < minQtyNum) {
-            tQty = minQtyNum;
-          }
-          placeOrder("BUY", tQty, price);
+    const maxQtyNum = parseFloat(quantityFilter.maxQty);
+    if (autoOrder === true && maxQtyNum > 0) {
+      //自动下单
+      const decimalCount = computeDecimalCount(quantityFilter.stepSize);
+      const minQtyNum = parseFloat(quantityFilter.minQty);
+      if (parseFloat(bidInfo.offerBalance) > minQtyNum && bidList.length > 0) {
+        const item = bidList[0];
+        const price = parseFloat(item[0]);
+        let tQty = customToFixed(
+          Math.abs(parseFloat(bidInfo.offerBalance) / parseFloat(price)),
+          decimalCount
+        );
+        if (tQty > maxQtyNum) {
+          tQty = maxQtyNum;
         }
-        if (
-          parseFloat(askInfo.offerBalance) > minQtyNum &&
-          askList.length > 0
-        ) {
-          const item = askList[askList.length - 1];
-          const price = parseFloat(item[0]);
-          let tBalance = customToFixed(
-            Math.abs(parseFloat(askInfo.offerBalance)),
-            decimalCount
-          );
-          if (tBalance > maxQtyNum) {
-            tBalance = maxQtyNum;
-          }
-          if (tBalance < minQtyNum) {
-            tBalance = minQtyNum;
-          }
-          placeOrder("SELL", tBalance, price);
+        if (tQty < minQtyNum) {
+          tQty = minQtyNum;
         }
-      } else {
-        //已有订单，判断下是否需要撤销订单，然后重新下单
+        placeOrder("BUY", tQty, price);
+        console.log("************* AUTO ORDER BUY " + tQty + " " + xglobal.inst().baseAsset + " *************");
+      }
+      if (parseFloat(askInfo.offerBalance) > minQtyNum && askList.length > 0) {
+        const item = askList[askList.length - 1];
+        const price = parseFloat(item[0]);
+        let tQty = customToFixed(
+          Math.abs(parseFloat(askInfo.offerBalance)),
+          decimalCount
+        );
+        if (tQty > maxQtyNum) {
+          tQty = maxQtyNum;
+        }
+        if (tQty < minQtyNum) {
+          tQty = minQtyNum;
+        }
+        placeOrder("SELL", tQty, price);
+        console.log("************* AUTO ORDER SELL " + tQty + " " + xglobal.inst().baseAsset + " *************");
       }
     }
   }, [orders, bidList, askList]);
@@ -942,7 +929,7 @@ const PlaceOrderCard = (props) => {
                   "，请调整后再试一次";
                 canOrder = false;
               }
-              if (askInfo.quantity > bidInfo.offerBalance) {
+              if (askInfo.quantity > askInfo.offerBalance) {
                 alerContent =
                   "下单数量大于 " +
                   xglobal.inst().baseAsset +

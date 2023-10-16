@@ -45,75 +45,75 @@ const PlaceOrderCard = (props) => {
   const [autoOrder, setAutoOrder] = useState(false);
   const [alertInfo, setAlertInfo] = useState({ visible: false, content: "" });
   //
-  // useEffect(() => {
-  //   const maxQtyNum = parseFloat(quantityFilter.maxQty);
-  //   if (autoOrder === true && maxQtyNum > 0) {
-  //     //自动下单
-  //     const decimalCount = computeDecimalCount(quantityFilter.stepSize);
-  //     const minQtyNum = parseFloat(quantityFilter.minQty);
-  //     if (parseFloat(bidInfo.offerBalance) > minQtyNum && bidList.length > 0) {
-  //       const item = bidList[0];
-  //       const price = parseFloat(item[0]);
-  //       let tQty = customToFixed(
-  //         Math.abs(parseFloat(bidInfo.offerBalance) / parseFloat(price)),
-  //         decimalCount
-  //       );
-  //       if (tQty > maxQtyNum) {
-  //         tQty = maxQtyNum;
-  //       }
-  //       if (tQty < minQtyNum) {
-  //         tQty = minQtyNum;
-  //       }
-  //       placeOrder("BUY", tQty, price);
-  //       console.log("************* AUTO ORDER BUY " + tQty + " " + xglobal.inst().baseAsset + " *************");
-  //     }
-  //     if (parseFloat(askInfo.offerBalance) > minQtyNum && askList.length > 0) {
-  //       const item = askList[askList.length - 1];
-  //       const price = parseFloat(item[0]);
-  //       let tQty = customToFixed(
-  //         Math.abs(parseFloat(askInfo.offerBalance)),
-  //         decimalCount
-  //       );
-  //       if (tQty > maxQtyNum) {
-  //         tQty = maxQtyNum;
-  //       }
-  //       if (tQty < minQtyNum) {
-  //         tQty = minQtyNum;
-  //       }
-  //       placeOrder("SELL", tQty, price);
-  //       console.log("************* AUTO ORDER SELL " + tQty + " " + xglobal.inst().baseAsset + " *************");
-  //     }
-  //   }
-  // }, [orders, bidList, askList]);
+  useEffect(() => {
+    const maxQtyNum = parseFloat(quantityFilter.maxQty);
+    if (autoOrder === true && maxQtyNum > 0) {
+      //自动下单
+      const decimalCount = computeDecimalCount(quantityFilter.stepSize);
+      const minQtyNum = parseFloat(quantityFilter.minQty);
+      if (parseFloat(bidInfo.offerBalance) > minQtyNum && bidList.length > 0) {
+        const item = bidList[0];
+        const price = parseFloat(item[0]);
+        let tQty = customToFixed(
+          Math.abs(parseFloat(bidInfo.offerBalance) / parseFloat(price)),
+          decimalCount
+        );
+        if (tQty > maxQtyNum) {
+          tQty = maxQtyNum;
+        }
+        if (tQty < minQtyNum) {
+          tQty = minQtyNum;
+        }
+        placeOrder("BUY", tQty, price);
+        console.log("************* AUTO ORDER BUY " + tQty + " " + xglobal.inst().baseAsset + " *************");
+      }
+      if (parseFloat(askInfo.offerBalance) > minQtyNum && askList.length > 0) {
+        const item = askList[askList.length - 1];
+        const price = parseFloat(item[0]);
+        let tQty = customToFixed(
+          Math.abs(parseFloat(askInfo.offerBalance)),
+          decimalCount
+        );
+        if (tQty > maxQtyNum) {
+          tQty = maxQtyNum;
+        }
+        if (tQty < minQtyNum) {
+          tQty = minQtyNum;
+        }
+        placeOrder("SELL", tQty, price);
+        console.log("************* AUTO ORDER SELL " + tQty + " " + xglobal.inst().baseAsset + " *************");
+      }
+    }
+  }, [orders, bidList, askList]);
 
-  // useEffect(() => {
-  //   const assets = userAssets;
-  //   if (assets.length > 0) {
-  //     for (let index = 0; index < assets.length; index++) {
-  //       const asset = assets[index];
-  //       if (asset["asset"] === xglobal.inst().baseAsset) {
-  //         askInfo.offerBalance = asset["free"];
-  //         setAskInfo({ ...askInfo });
-  //       }
-  //       if (asset["asset"] === xglobal.inst().quoteAsset) {
-  //         bidInfo.offerBalance = asset["free"];
-  //         setBidInfo({ ...bidInfo });
-  //       }
-  //     }
-  //   } else {
-  //     askInfo.offerBalance = 0;
-  //     setAskInfo({ ...askInfo });
-  //     bidInfo.offerBalance = 0;
-  //     setBidInfo({ ...bidInfo });
-  //   }
-  // }, [userAssets]);
+  useEffect(() => {
+    const assets = userAssets;
+    if (assets.length > 0) {
+      for (let index = 0; index < assets.length; index++) {
+        const asset = assets[index];
+        if (asset["asset"] === xglobal.inst().baseAsset) {
+          askInfo.offerBalance = asset["free"];
+          setAskInfo({ ...askInfo });
+        }
+        if (asset["asset"] === xglobal.inst().quoteAsset) {
+          bidInfo.offerBalance = asset["free"];
+          setBidInfo({ ...bidInfo });
+        }
+      }
+    } else {
+      askInfo.offerBalance = 0;
+      setAskInfo({ ...askInfo });
+      bidInfo.offerBalance = 0;
+      setBidInfo({ ...bidInfo });
+    }
+  }, [userAssets]);
 
-  // useEffect(() => {
-  //   bidInfo.price = tarPrice;
-  //   setBidInfo({ ...bidInfo });
-  //   askInfo.price = tarPrice;
-  //   setAskInfo({ ...askInfo });
-  // }, [tarPrice]);
+  useEffect(() => {
+    bidInfo.price = tarPrice;
+    setBidInfo({ ...bidInfo });
+    askInfo.price = tarPrice;
+    setAskInfo({ ...askInfo });
+  }, [tarPrice]);
 
   const placeOrder = (side, quantity, price) => {
     if (apiKey.length === 0 || apiSecret.length === 0) {
